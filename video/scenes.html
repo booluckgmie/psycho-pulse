@@ -1,0 +1,360 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Psychometric-Pulse video</title>
+<style>
+:root{--bg:#f4f7fb;--ink:#16202e;--mute:#5d6b80;--line:#e3e9f1;--teal:#0fb5a7;--indigo:#4b5fe8;--violet:#8a4fe0;--coral:#ff6b6b;--sun:#ffb830;--red:#e5484d;--orange:#f08a1c;--yellow:#e2b714;--green:#18a96b;--grad:linear-gradient(120deg,#0fb5a7 0%,#4b5fe8 55%,#8a4fe0 100%)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);font-family:Inter,"Segoe UI",system-ui,sans-serif;color:var(--ink)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:radial-gradient(1200px 700px at 15% 10%,#e4f7f5 0%,transparent 60%),radial-gradient(1100px 700px at 90% 90%,#e8e6fb 0%,transparent 60%),var(--bg)}
+.scene{position:absolute;inset:0;opacity:0}
+.abs{position:absolute}
+.card{position:absolute;background:#fff;border:2px solid var(--line);border-radius:28px;box-shadow:0 2px 4px rgba(22,32,46,.05),0 20px 50px rgba(22,32,46,.09)}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h1{font-weight:800;letter-spacing:-.035em;line-height:1.05}
+.chip{position:absolute;padding:16px 30px;border-radius:99px;font-weight:700;font-size:36px;white-space:nowrap;color:#fff}
+.pill{position:absolute;padding:8px 22px;border-radius:99px;font-weight:700;font-size:26px;white-space:nowrap}
+svg{position:absolute;overflow:visible}
+#cap{position:absolute;left:50%;top:845px;transform:translateX(-50%);width:max-content;max-width:1500px;text-align:center;font-size:40px;font-weight:600;line-height:1.3;padding:14px 34px;border-radius:26px;background:rgba(255,255,255,.88);box-shadow:0 8px 30px rgba(22,32,46,.1);opacity:0}
+#brand{position:absolute;left:64px;top:46px;display:flex;align-items:center;gap:16px;font-weight:800;font-size:34px;letter-spacing:-.02em;opacity:0}
+#brand i{width:26px;height:26px;border-radius:50%;background:var(--grad);display:block}
+#proto{position:absolute;right:56px;top:52px;font-size:24px;font-weight:700;color:var(--mute);background:rgba(255,255,255,.9);border:2px solid var(--line);padding:8px 22px;border-radius:99px;opacity:0}
+#ecg{position:absolute;left:0;top:950px;width:1920px;height:130px;pointer-events:none}
+</style></head><body>
+<div id="stage">
+  <div id="brand"><i></i>Psychometric-Pulse</div>
+  <div id="proto">Prototype &middot; simulated data</div>
+
+  <!-- S1 -->
+  <section class="scene" id="s1">
+    <div class="abs h1 grad-text" id="t1" style="left:0;width:1920px;top:150px;text-align:center;font-size:140px">Once a Year Isn't Enough.</div>
+    <div class="abs" id="t1b" style="left:0;width:1920px;top:330px;text-align:center;font-size:50px;font-weight:600;color:var(--mute);font-style:italic">Setahun Sekali Tak Cukup.</div>
+    <div id="months"></div>
+    <div class="pill" id="testpill" style="background:var(--coral);color:#fff;font-size:30px">Psychometric test</div>
+    <div class="abs" id="ring" style="width:150px;height:150px;border:8px solid var(--coral);border-radius:50%"></div>
+  </section>
+
+  <!-- S2 -->
+  <section class="scene" id="s2">
+    <div class="abs" id="t2" style="left:0;width:1920px;top:130px;text-align:center;font-size:58px;font-weight:800;letter-spacing:-.02em">What happens <span class="grad-text">between</span> the checks?</div>
+    <svg id="s2svg" style="left:0;top:0" width="1920" height="1080"></svg>
+    <div class="abs" id="q2" style="font-size:150px;font-weight:800;color:var(--coral);left:930px;top:420px">?</div>
+  </section>
+
+  <!-- S3 -->
+  <section class="scene" id="s3">
+    <svg id="s3svg" style="left:0;top:0" width="1920" height="1080"></svg>
+    <div class="card" id="phone" style="left:300px;top:235px;width:420px;height:520px;border-radius:44px;padding:0;overflow:hidden">
+      <div style="height:70px;background:var(--grad);color:#fff;font-weight:800;font-size:32px;display:flex;align-items:center;justify-content:center">Weekly pulse</div>
+      <div id="qs" style="padding:14px 26px"></div>
+    </div>
+    <div class="pill" id="s3chip" style="left:300px;top:772px;width:420px;text-align:center;background:var(--teal);color:#fff;font-size:28px">5 questions &middot; 2 minutes</div>
+    <div class="card" id="stat" style="left:900px;top:250px;width:800px;height:500px;padding:36px 44px">
+      <div style="font-size:30px;font-weight:700;color:var(--mute)">In simulation &middot; found before the crisis point</div>
+      <div style="margin-top:50px;font-size:34px;font-weight:700">Weekly check-ins</div>
+      <div style="height:46px;background:var(--line);border-radius:99px;margin-top:10px;overflow:hidden;position:relative"><div id="bw" style="height:100%;width:0;background:var(--grad);border-radius:99px"></div><span id="bwv" style="position:absolute;right:20px;top:3px;font-weight:800;font-size:30px;color:#fff"></span></div>
+      <div style="margin-top:44px;font-size:34px;font-weight:700">Once-a-term check-ins</div>
+      <div style="height:46px;background:var(--line);border-radius:99px;margin-top:10px;overflow:hidden;position:relative"><div id="bt" style="height:100%;width:0;background:var(--coral);border-radius:99px"></div><span id="btv" style="position:absolute;left:12px;top:3px;font-weight:800;font-size:30px;color:var(--ink)"></span></div>
+      <div style="margin-top:50px;font-size:24px;color:var(--mute)">Synthetic data. 30 simulated schools, 120 students each.</div>
+    </div>
+  </section>
+
+  <!-- S4 -->
+  <section class="scene" id="s4">
+    <svg id="s4svg" style="left:0;top:0" width="1920" height="1080"></svg>
+    <div class="chip" id="c_tt" style="left:260px;top:215px;background:var(--indigo)">Teacher transfer</div>
+    <div class="chip" id="c_ex" style="left:640px;top:215px;background:var(--violet)">Exam week</div>
+    <div class="abs" id="cl_t" style="left:1000px;top:200px;font-size:34px;font-weight:700;color:var(--mute)">Class average</div>
+  </section>
+
+  <!-- S5 -->
+  <section class="scene" id="s5">
+    <div class="card" id="s5L" style="left:110px;top:170px;width:800px;height:600px"></div>
+    <div class="card" id="s5R" style="left:1010px;top:170px;width:800px;height:600px"></div>
+    <svg id="s5svg" style="left:0;top:0" width="1920" height="1080"></svg>
+  </section>
+
+  <!-- S6 -->
+  <section class="scene" id="s6">
+    <div class="chip" id="k1" style="left:150px;top:190px;background:var(--indigo)">Low score</div>
+    <div class="chip" id="k2" style="left:150px;top:310px;background:var(--indigo)">3-week decline</div>
+    <div class="chip" id="k3" style="left:150px;top:430px;background:var(--indigo)">Sharp drop vs own baseline</div>
+    <div class="chip" id="k4" style="left:150px;top:590px;background:var(--teal)">Attendance</div>
+    <div class="chip" id="k5" style="left:520px;top:590px;background:var(--teal)">Late work</div>
+    <svg id="s6svg" style="left:0;top:0" width="1920" height="1080"></svg>
+    <div id="lv"></div>
+  </section>
+
+  <!-- S7 -->
+  <section class="scene" id="s7">
+    <div class="card" id="win" style="left:150px;top:120px;width:1620px;height:700px;overflow:hidden;padding:0">
+      <div style="height:62px;background:#eef2f8;border-bottom:2px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:12px">
+        <i style="width:16px;height:16px;border-radius:50%;background:#ff6b6b;display:block"></i><i style="width:16px;height:16px;border-radius:50%;background:#ffb830;display:block"></i><i style="width:16px;height:16px;border-radius:50%;background:#18a96b;display:block"></i>
+        <div style="margin-left:30px;background:#fff;border:2px solid var(--line);border-radius:99px;padding:4px 26px;font-size:24px;color:var(--mute);font-weight:600">&#128274; psycho-pulse.vercel.app</div>
+      </div>
+      <div id="shotA" style="position:absolute;left:50px;top:90px;width:1520px"><img src="assets/tiles.png" style="width:1520px;display:block;border-radius:14px"><img src="assets/table_top.png" style="width:1520px;display:block;margin-top:18px;border-radius:14px"></div>
+      <img id="shotB" src="assets/forecast.png" style="position:absolute;left:50px;top:100px;width:1520px;border-radius:14px">
+    </div>
+    <div class="pill" id="s7tip" style="background:var(--red);color:#fff;font-size:34px;padding:14px 30px">Outlook: floor in ~1 week</div>
+    <div class="pill" id="s7note" style="background:var(--violet);color:#fff;font-size:30px;padding:12px 28px">Forecast &middot; indicative, not a diagnosis</div>
+  </section>
+
+  <!-- S8 -->
+  <section class="scene" id="s8">
+    <div class="card" id="qe" style="left:130px;top:170px;width:850px;height:560px;padding:34px 40px">
+      <div style="font-size:34px;font-weight:800">Type in a few scores</div>
+      <div style="font-size:24px;color:var(--mute);margin-top:6px">One student per line, scores for week 1, 2, 3&hellip;</div>
+      <pre id="typed" style="margin-top:22px;font:600 31px/1.7 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);height:300px"></pre>
+      <div class="pill" id="btn" style="left:40px;top:470px;background:var(--indigo);color:#fff;font-size:30px;padding:12px 34px">Analyse these scores</div>
+    </div>
+    <div class="card" id="rd" style="left:1060px;top:170px;width:730px;height:560px;padding:34px 40px">
+      <div style="font-size:34px;font-weight:800">How much can you trust this?</div>
+      <div id="tier" class="pill" style="left:40px;top:100px;background:var(--teal);color:#fff;font-size:30px">Usable</div>
+      <div id="steps" style="position:absolute;left:40px;top:190px;width:650px;display:flex;gap:12px"></div>
+      <div style="position:absolute;left:40px;top:250px;width:650px;font-size:27px;font-weight:600;color:var(--mute);line-height:1.45">3 screenings: absolute minimum<br><b style="color:var(--ink)">5 screenings: recommended minimum</b><br>8+ screenings: reliable</div>
+      <div style="position:absolute;left:40px;top:440px;width:650px;font-size:25px;color:var(--mute)">Best with 10+ students per class (6 is the minimum).</div>
+    </div>
+  </section>
+
+  <!-- S9 -->
+  <section class="scene" id="s9">
+    <div class="abs" id="t9" style="left:0;width:1920px;top:120px;text-align:center;font-size:76px;font-weight:800;letter-spacing:-.03em">Rebuilt, <span class="grad-text">not stored.</span></div>
+    <svg id="s9svg" style="left:0;top:0" width="1920" height="1080"></svg>
+    <div class="chip" id="n1" style="left:1170px;top:330px;background:var(--teal)">No cookies</div>
+    <div class="chip" id="n2" style="left:1170px;top:450px;background:var(--indigo)">No storage</div>
+    <div class="chip" id="n3" style="left:1170px;top:570px;background:var(--violet)">No data sent</div>
+  </section>
+
+  <!-- S10 -->
+  <section class="scene" id="s10">
+    <div class="abs" id="glow" style="left:560px;top:120px;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(255,184,48,.55) 0%,rgba(255,184,48,0) 68%)"></div>
+    <svg id="s10svg" style="left:0;top:0" width="1920" height="1080"></svg>
+    <div id="wipe" class="abs" style="left:960px;top:540px;width:10px;height:10px;border-radius:50%;background:var(--grad);transform:translate(-50%,-50%)"></div>
+    <div id="endc" class="abs" style="left:0;top:0;width:1920px;height:1080px;color:#fff;text-align:center;opacity:0">
+      <div style="position:absolute;top:220px;width:100%;display:flex;justify-content:center"><i id="logo" style="display:block;width:96px;height:96px;border-radius:50%;background:#fff"></i></div>
+      <div class="h1" style="position:absolute;top:350px;width:100%;font-size:132px">Psychometric-Pulse</div>
+      <div style="position:absolute;top:510px;width:100%;font-size:64px;font-weight:700">Notice early. Support early.</div>
+      <div style="position:absolute;top:600px;width:100%;font-size:46px;font-weight:500;font-style:italic;opacity:.92">Perhati awal. Sokong awal.</div>
+      <div id="url" style="position:absolute;top:720px;left:50%;transform:translateX(-50%);background:#fff;color:var(--indigo);font-weight:800;font-size:42px;padding:16px 46px;border-radius:99px;box-shadow:0 14px 40px rgba(0,0,0,.2)">psycho-pulse.vercel.app</div>
+      <div style="position:absolute;top:850px;width:100%;font-size:26px;opacity:.9">Prototype built on simulated data &middot; supports counsellors, never labels students</div>
+    </div>
+  </section>
+
+  <svg id="ecg" viewBox="0 0 1920 130"><defs><linearGradient id="eg" x1="0" x2="1"><stop offset="0" stop-color="#0fb5a7"/><stop offset=".55" stop-color="#4b5fe8"/><stop offset="1" stop-color="#8a4fe0"/></linearGradient></defs><polyline id="ecgl" fill="none" stroke="url(#eg)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+  <div id="cap"></div>
+</div>
+<script src="timeline.js"></script>
+<script>
+const TL=window.TL,$=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const P=(t,a,b)=>clamp((t-a)/(b-a));
+const E={out:x=>1-Math.pow(1-x,3),io:x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,back:x=>{const c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lin:x=>x};
+const T=(el,o=1,x=0,y=0,s=1,r=0)=>{el.style.opacity=o;el.style.transform=`translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`};
+const pop=(t,a,d=.45)=>E.back(P(t,a,a+d)); // 0..1 with overshoot
+const NS='http://www.w3.org/2000/svg';
+const svgEl=(p,tag,at)=>{const e=document.createElementNS(NS,tag);for(const k in at)e.setAttribute(k,at[k]);p.appendChild(e);return e};
+const path=pts=>pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+const COL={teal:'#0fb5a7',indigo:'#4b5fe8',violet:'#8a4fe0',coral:'#ff6b6b',mute:'#5d6b80',line:'#e3e9f1',red:'#e5484d',orange:'#f08a1c',yellow:'#e2b714',green:'#18a96b',slate:'#9aa8c2'};
+/* draw a polyline progressively: returns pts up to fraction f (interpolated) */
+function part(pts,f){if(f<=0)return [];if(f>=1)return pts;const n=(pts.length-1)*f,i=Math.floor(n),r=n-i;const o=pts.slice(0,i+1);if(i<pts.length-1)o.push([pts[i][0]+(pts[i+1][0]-pts[i][0])*r,pts[i][1]+(pts[i+1][1]-pts[i][1])*r]);return o}
+/* ---------- init static parts ---------- */
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const mEls=MONTHS.map((m,i)=>{const d=document.createElement('div');d.className='card';d.style.cssText=`left:${130+i*140}px;top:520px;width:120px;height:120px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:${COL.mute}`;d.textContent=m;$('months').appendChild(d);return d});
+const qs=['Mood','Sleep','Stress','Belonging','Pressure'];
+const qdots=qs.map((q,i)=>{const row=document.createElement('div');row.style.cssText='margin:0 0 12px;';row.innerHTML=`<div style="font-weight:700;font-size:25px;margin-bottom:5px">${q}</div><div style="display:flex;gap:12px">${[0,1,2,3,4].map(()=>'<i style="display:block;width:42px;height:42px;border-radius:50%;border:3px solid #cfd8e6;background:#fff"></i>').join('')}</div>`;$('qs').appendChild(row);return [...row.querySelectorAll('i')]});
+const stepsEl=[0,1,2,3].map(i=>{const d=document.createElement('i');d.style.cssText='display:block;flex:1;height:22px;border-radius:99px;background:#e3e9f1';$('steps').appendChild(d);return d});
+const LV=[['Green','no signal',COL.green],['Yellow','mild one-step drop',COL.yellow],['Orange','a signal fires',COL.orange],['Red','signal + attendance / late work',COL.red]];
+const lvEls=LV.map((l,i)=>{const d=document.createElement('div');d.style.cssText=`position:absolute;left:1000px;top:${210+i*130}px;width:700px;height:104px;border-radius:26px;background:${l[2]};color:#fff;padding:14px 34px;box-shadow:0 14px 34px rgba(22,32,46,.14)`;d.innerHTML=`<div style="font-size:40px;font-weight:800">${l[0]}</div><div style="font-size:26px;font-weight:600;opacity:.95;margin-top:-2px">${l[1]}</div>`;$('lv').appendChild(d);return d});
+const SC=TL.scenes,S=id=>SC[id-1];
+const STAT={weekly:.99,termly:.17};   // frozen from data/evaluation.csv (before_crisis)
+/* ---------- ECG ---------- */
+const BEATS=TL.beats;
+const qrs=dt=>0.13*Math.exp(-Math.pow((dt+.16)/.045,2))-0.14*Math.exp(-Math.pow((dt+.04)/.016,2))+1.0*Math.exp(-Math.pow(dt/.02,2))-0.32*Math.exp(-Math.pow((dt-.045)/.022,2))+0.26*Math.exp(-Math.pow((dt-.26)/.07,2));
+function ecg(t,amp){
+  const W=1920,v=300,pts=[];
+  for(let x=0;x<=W;x+=5){const tau=t-(W-x)/v;let a=0;for(const b of BEATS){const d=tau-b;if(d>-.4&&d<.6)a+=qrs(d)}
+    // slight baseline wobble so the flat line is alive
+    pts.push(x.toFixed(0)+','+(82-(a*amp)+Math.sin(x*.02+t*2)*1.2).toFixed(1))}
+  $('ecgl').setAttribute('points',pts.join(' '));
+}
+/* ---------- scenes ---------- */
+function sc1(t){
+  const a=pop(t,.1,.9);T($('t1'),clamp(t/.6),0,(1-E.out(P(t,0,.9)))*40,.9+.1*a);
+  T($('t1b'),P(t,1.0,1.7),0,(1-E.out(P(t,1,1.7)))*20);
+  mEls.forEach((d,i)=>{const p=pop(t,1.6+i*.07,.5);const dim=i===6?1:1-.55*P(t,3.0,3.6);T(d,clamp(p*1.5)*dim,0,0,.6+.4*p)});
+  const r=pop(t,3.1,.6);T($('ring'),clamp(r*2),0,0,.4+.6*r);$('ring').style.left=(130+6*140-15)+'px';$('ring').style.top='505px';
+  T($('testpill'),clamp(pop(t,3.5,.5)*2),0,0,.7+.3*pop(t,3.5,.5));$('testpill').style.left=(130+6*140-90)+'px';$('testpill').style.top='430px';
+  const sh=$('t1');if(t>S(1).dur-.8)sh.style.opacity=1;
+}
+function sc2(t){
+  const svg=$('s2svg');svg.innerHTML='';
+  T($('t2'),P(t,0,.6),0,(1-E.out(P(t,0,.6)))*20);
+  const X0=240,X1=1680,Y0=250,Y1=760,xm=m=>X0+(m/12)*(X1-X0),ys=v=>Y1-(v-3)/(10-3)*(Y1-Y0);
+  for(const v of [4,6,8,10])svgEl(svg,'line',{x1:X0,x2:X1,y1:ys(v),y2:ys(v),stroke:COL.line,'stroke-width':2});
+  MONTHS.forEach((m,i)=>svgEl(svg,'text',{x:xm(i+.5),y:Y1+50,'text-anchor':'middle','font-size':26,'font-weight':700,fill:COL.mute}).textContent=m);
+  // unseen zone between the two tests
+  const z=P(t,.6,1.4);
+  svgEl(svg,'rect',{x:xm(1),y:Y0-20,width:(xm(11)-xm(1))*E.out(z),height:Y1-Y0+40,fill:'#ff6b6b','fill-opacity':.09,rx:24});
+  svgEl(svg,'text',{x:(xm(1)+xm(11))/2,y:Y0+10,'text-anchor':'middle','font-size':34,'font-weight':800,fill:COL.coral,opacity:z}).textContent='unseen';
+  [[1,'Test'],[11,'Test']].forEach(([m,l])=>{const p=pop(t,.5+(m>5?.5:0),.5);
+    svgEl(svg,'line',{x1:xm(m),x2:xm(m),y1:Y0-20,y2:Y1+20,stroke:COL.coral,'stroke-width':4,'stroke-dasharray':'12 10',opacity:p});
+    svgEl(svg,'text',{x:xm(m),y:Y0-40,'text-anchor':'middle','font-size':34,'font-weight':800,fill:COL.coral,opacity:p}).textContent=l});
+  const N=48,pts=[];for(let i=0;i<=N;i++){const m=i/N*12;const v=7.7-0.12*m-0.035*m*m*(m/12)*1.2-0.0*m+Math.sin(m*3.1)*.12;pts.push([xm(m),ys(v)])}
+  const f=E.io(P(t,1.2,5.6));const pp=part(pts,f);
+  svgEl(svg,'path',{d:path(pp),fill:'none',stroke:COL.indigo,'stroke-width':8,'stroke-linecap':'round','stroke-linejoin':'round'});
+  if(pp.length){const e=pp[pp.length-1];svgEl(svg,'circle',{cx:e[0],cy:e[1],r:13,fill:COL.indigo})}
+  // two measured dots
+  [1,11].forEach(m=>{const i=Math.round(m/12*N);if(f>=i/N)svgEl(svg,'circle',{cx:pts[i][0],cy:pts[i][1],r:16,fill:'#fff',stroke:COL.indigo,'stroke-width':7})});
+  const q=pop(t,4.0,.6);T($('q2'),clamp(q*1.6),0,(1-q)*30,.3+.7*q,(1-q)*-20);$('q2').style.left=(xm(6)-45)+'px';$('q2').style.top=(ys(5.4)-210)+'px';
+}
+function sc3(t){
+  const svg=$('s3svg');svg.innerHTML='';
+  // 40 weekly ticks
+  for(let i=0;i<40;i++){const p=pop(t,.3+i*.045,.35);svgEl(svg,'rect',{x:160+i*40.5,y:170,width:24,height:44,rx:8,fill:i%4===0?COL.indigo:COL.teal,opacity:clamp(p*1.5),transform:`translate(0 ${(1-p)*-30})`})}
+  svgEl(svg,'text',{x:160,y:160,'font-size':28,'font-weight':700,fill:COL.mute,opacity:P(t,1,1.8)}).textContent='40 weeks, 40 chances to notice';
+  T($('phone'),P(t,1.2,1.9),0,(1-E.out(P(t,1.2,1.9)))*80);
+  T($('s3chip'),P(t,3.8,4.4),0,0);
+  qdots.forEach((row,qi)=>{const start=2.2+qi*.5,pr=pop(t,start,.3);const pick=[3,2,1,3,2][qi];
+    row.forEach((d,di)=>{const on=di<=pick&&t>=start;const sel=di===pick&&t>=start;
+      d.style.background=sel?'#4b5fe8':(on?'#dfe5fb':'#fff');d.style.borderColor=on?'#4b5fe8':'#cfd8e6';d.style.transform=sel?`scale(${1+.25*(1-P(t,start,start+.3))})`:'scale(1)'})});
+  const sp=E.out(P(t,5.6,6.4));T($('stat'),sp,(1-sp)*80,0);
+  const w=E.out(P(t,6.4,7.6)),tm=E.out(P(t,7.4,8.4));
+  $('bw').style.width=(w*STAT.weekly*100)+'%';$('bwv').textContent=w>.2?Math.round(w*STAT.weekly*100)+'%':'';
+  $('bt').style.width=(tm*STAT.termly*100)+'%';$('btv').textContent=tm>.05?Math.round(tm*STAT.termly*100)+'%':'';
+  $('btv').style.left=(Math.max(10,tm*STAT.termly*712)+16)+'px';
+}
+function sc4(t){
+  const svg=$('s4svg');svg.innerHTML='';
+  const drop=E.out(P(t,3.0,4.2)),ex=E.out(P(t,5.0,5.8));
+  // students grid
+  for(let r=0;r<5;r++)for(let c=0;c<6;c++){const i=r*6+c,p=pop(t,.3+i*.03,.4);
+    const dy=drop*(10+((i*7)%5)*3)+ex*8;const col=drop>.5?COL.slate:(i%3?COL.teal:COL.indigo);
+    svgEl(svg,'circle',{cx:300+c*88,cy:380+r*88+dy,r:30*p,fill:col,opacity:drop>.01?1-.15*drop:1});
+    svgEl(svg,'circle',{cx:300+c*88-9,cy:380+r*88+dy-4,r:3.6*p,fill:'#fff'});svgEl(svg,'circle',{cx:300+c*88+9,cy:380+r*88+dy-4,r:3.6*p,fill:'#fff'});
+    svgEl(svg,'path',{d:`M${300+c*88-9} ${380+r*88+dy+8} q9 ${drop>.5?-6:9} 18 0`,stroke:'#fff','stroke-width':3.5,fill:'none','stroke-linecap':'round',opacity:p})}
+  // teacher
+  const tin=pop(t,.8,.6),leave=E.io(P(t,1.9,3.4));const tx=150-leave*420,to=clamp(tin*1.5)*(1-P(t,2.8,3.4));
+  const g=svgEl(svg,'g',{opacity:to,transform:`translate(${tx} 560)`});
+  svgEl(g,'circle',{cx:0,cy:0,r:48,fill:COL.violet});svgEl(g,'rect',{x:-58,y:-84,width:116,height:14,rx:4,fill:'#16202e'});svgEl(g,'path',{d:'M-34 -84 L0 -112 L34 -84Z',fill:'#16202e'});
+  svgEl(g,'circle',{cx:-15,cy:-4,r:5,fill:'#fff'});svgEl(g,'circle',{cx:15,cy:-4,r:5,fill:'#fff'});svgEl(g,'path',{d:'M-14 16 q14 12 28 0',stroke:'#fff','stroke-width':5,fill:'none','stroke-linecap':'round'});
+  svgEl(g,'text',{x:0,y:90,'text-anchor':'middle','font-size':26,'font-weight':700,fill:COL.mute}).textContent='Teacher';
+  // class chart
+  const X0=1000,X1=1740,Y0=290,Y1=730,xm=w=>X0+w/12*(X1-X0),ys=v=>Y1-(v-4)/(8.5-4)*(Y1-Y0);
+  for(const v of [5,6,7,8])svgEl(svg,'line',{x1:X0,x2:X1,y1:ys(v),y2:ys(v),stroke:COL.line,'stroke-width':2});
+  const pts=[];for(let i=0;i<=48;i++){const w=i/4;let v=7.5+Math.sin(w*2.3)*.06;if(w>=6)v-=1.7*(1-Math.exp(-(w-6)*3));if(w>=9)v-=.0;if(w>=9.2)v-=0.5*(1-Math.exp(-(w-9.2)*4));pts.push([xm(w),ys(v)])}
+  const f=E.io(P(t,.8,5.8));svgEl(svg,'path',{d:path(part(pts,f)),fill:'none',stroke:COL.indigo,'stroke-width':8,'stroke-linecap':'round','stroke-linejoin':'round'});
+  [[6,'Teacher change'],[9.2,'Exam week']].forEach(([w,l],k)=>{const p=P(t,k?5.0:3.0,k?5.5:3.5);if(p>0){svgEl(svg,'line',{x1:xm(w),x2:xm(w),y1:Y0,y2:Y1,stroke:COL.mute,'stroke-width':3,'stroke-dasharray':'8 8',opacity:p});svgEl(svg,'text',{x:xm(w),y:Y0-14,'text-anchor':'middle','font-size':24,'font-weight':700,fill:COL.mute,opacity:p}).textContent=l}});
+  T($('cl_t'),P(t,.6,1.2));T($('c_tt'),clamp(pop(t,3.0,.5)*2),0,0,.7+.3*pop(t,3.0,.5));T($('c_ex'),clamp(pop(t,5.0,.5)*2),0,0,.7+.3*pop(t,5.0,.5));
+  $('c_tt').style.top='170px';$('c_ex').style.top='170px';$('c_tt').style.left='170px';$('c_ex').style.left='560px';
+}
+function sc5(t){
+  const svg=$('s5svg');svg.innerHTML='';
+  T($('s5L'),P(t,0,.6),0,(1-E.out(P(t,0,.6)))*40);T($('s5R'),P(t,.3,.9),0,(1-E.out(P(t,.3,.9)))*40);
+  const box=(x0,title,sub,col)=>{svgEl(svg,'text',{x:x0+40,y:238,'font-size':38,'font-weight':800,fill:'#16202e'}).textContent=title;svgEl(svg,'text',{x:x0+40,y:278,'font-size':25,'font-weight':600,fill:col}).textContent=sub};
+  box(110,'Raw scores','the whole class dips',COL.mute);box(1010,'Adjusted for the environment','what is left is the student',COL.indigo);
+  const mk=(x0)=>{const X0=x0+60,X1=x0+740,Y0=330,Y1=720;return[w=>X0+(w-1)/11*(X1-X0),v=>Y1-(v-3)/(9-3)*(Y1-Y0),Y0,Y1]};
+  const [xl,yl,y0,y1]=mk(110),[xr,yr]=mk(1010);
+  for(const[x,y,x0]of[[xl,yl,110],[xr,yr,1010]]){for(const v of[4,6,8])svgEl(svg,'line',{x1:x0+60,x2:x0+740,y1:y(v),y2:y(v),stroke:COL.line,'stroke-width':2})}
+  const raw=[],adj=[],stu=[];for(let w=1;w<=12;w+=.25){const dip=w>=6?1.5*Math.exp(-(w-6)/5):0;const base=7.4+Math.sin(w*1.7)*.05;raw.push([xl(w),yl(base-dip)]);adj.push([xr(w),yr(base+Math.sin(w*2.9)*.04)]);
+    if(w>=4){const d=Math.min(w-4,8)*.34;stu.push([xr(w),yr(base+.2-d)])}}
+  svgEl(svg,'path',{d:path(part(raw,E.io(P(t,.8,3.4)))),fill:'none',stroke:COL.mute,'stroke-width':7,'stroke-dasharray':'16 12','stroke-linecap':'round'});
+  svgEl(svg,'path',{d:path(part(adj,E.io(P(t,1.8,4.2)))),fill:'none',stroke:COL.indigo,'stroke-width':8,'stroke-linecap':'round'});
+  const mp=P(t,2.2,2.8);if(mp>0)for(const[x]of[[xl],[xr]]){const xx=x(6);svgEl(svg,'line',{x1:xx,x2:xx,y1:330,y2:720,stroke:COL.coral,'stroke-width':3,'stroke-dasharray':'8 8',opacity:mp});}
+  const lab=(x,txt)=>svgEl(svg,'text',{x:x(6)+8,y:350,'font-size':24,'font-weight':700,fill:COL.coral,opacity:mp}).textContent=txt;lab(xl,'Teacher change');lab(xr,'Teacher change');
+  const sf=E.io(P(t,4.6,7.4)),sp=part(stu,sf);
+  if(sp.length>1){svgEl(svg,'path',{d:path(sp),fill:'none',stroke:COL.coral,'stroke-width':9,'stroke-linecap':'round','stroke-linejoin':'round'});
+    const e=sp[sp.length-1],gl=pop(t,7.2,.6);svgEl(svg,'circle',{cx:e[0],cy:e[1],r:(16+30*gl*(.5+.5*Math.sin(t*7)))*(sf>.98?1:.4),fill:COL.coral,'fill-opacity':.22});svgEl(svg,'circle',{cx:e[0],cy:e[1],r:15,fill:COL.coral});
+    const lp=P(t,6.8,7.6);svgEl(svg,'circle',{cx:1070,cy:742,r:11,fill:COL.coral,opacity:lp});svgEl(svg,'text',{x:1095,y:752,'font-size':30,'font-weight':800,fill:COL.coral,opacity:lp}).textContent='S01 may need support'}
+}
+function sc6(t){
+  const ks=['k1','k2','k3','k4','k5'],tms=[1.8,3.0,4.2,5.4,5.9];
+  ks.forEach((k,i)=>{const p=pop(t,tms[i]-.1,.45);T($(k),clamp(p*1.6),(1-p)*-60,0,.6+.4*p)});
+  const svg=$('s6svg');svg.innerHTML='';
+  // arrows: chips -> ladder
+  const a=P(t,5.9,6.6);if(a>0){svgEl(svg,'path',{d:'M860 450 C 920 450 920 440 970 440',stroke:COL.indigo,'stroke-width':8,fill:'none','stroke-linecap':'round','stroke-dasharray':'400','stroke-dashoffset':(1-a)*400});svgEl(svg,'path',{d:'M960 410 L985 440 L955 462',stroke:COL.indigo,'stroke-width':8,fill:'none','stroke-linecap':'round','stroke-linejoin':'round',opacity:a})}
+  lvEls.forEach((d,i)=>{const p=pop(t,6.1+i*.3,.4);let hl=i===2?P(t,6.9,7.3)*(1-P(t,8.1,8.4)):i===3?P(t,8.0,8.4):0;const dim=(i<2?.38:1)*(1-.0);
+    T(d,clamp(p*1.6)*(t>6.8?(i===2||i===3?1:.4):1),(1-p)*80,0,1+.07*hl);d.style.boxShadow=hl>0?`0 0 0 ${8*hl}px rgba(${i===2?'240,138,28':'229,72,77'},.28),0 14px 34px rgba(22,32,46,.14)`:'0 14px 34px rgba(22,32,46,.14)'});
+  const L=pop(t,0,.5);
+}
+function sc7(t){
+  const p=E.out(P(t,0,.7));T($('win'),p,0,(1-p)*60);
+  const pan=E.io(P(t,.4,4.4))*-60;$('shotA').style.transform=`translateY(${pan}px)`;
+  const sw=E.io(P(t,4.6,5.4));$('shotA').style.opacity=1-sw;$('shotB').style.opacity=sw;$('shotB').style.transform=`scale(${1+.03*E.io(P(t,5.2,9.5))}) translateY(${(1-sw)*30}px)`;
+  const tip=pop(t,6.6,.5);T($('s7tip'),clamp(tip*1.6),0,0,.7+.3*tip);$('s7tip').style.left='1130px';$('s7tip').style.top='610px';
+  const n=pop(t,7.6,.5);T($('s7note'),clamp(n*1.6),0,0,.7+.3*n);$('s7note').style.left='1180px';$('s7note').style.top='790px';
+}
+const LINES=['S01, 7.5, 7.2, 6.8, 6.1, 5.4','S02, 7.0, 7.1, 7.0, 7.3, 7.1','S03, 6.8, 6.9, 6.6, 6.8, 6.7','S04, 7.4, 7.2, 7.5, 7.3, 7.4'];
+function sc8(t){
+  T($('qe'),P(t,0,.6),0,(1-E.out(P(t,0,.6)))*40);T($('rd'),P(t,.3,.9),0,(1-E.out(P(t,.3,.9)))*40);
+  const all=LINES.join('\n'),n=Math.floor(clamp((t-1.6)/ (LINES.join('\n').length*.11)) * all.length);
+  const txt=all.slice(0,n);$('typed').textContent=txt+((Math.floor(t*2.2)%2===0&&n<all.length)?'|':'');
+  const b=pop(t,4.6,.5);$('btn').style.transform=`scale(${1+.08*Math.sin(clamp((t-4.6)/1.0)*Math.PI)})`;
+  const ok=E.out(P(t,5.4,6.6));
+  stepsEl.forEach((s,i)=>{const on=ok*3>i+.2;s.style.background=on?'linear-gradient(90deg,#0fb5a7,#4b5fe8,#8a4fe0)':'#e3e9f1'});
+  const tr=pop(t,5.9,.5);T($('tier'),clamp(tr*1.6),0,0,.7+.3*tr);
+}
+function sc9(t){
+  const svg=$('s9svg');svg.innerHTML='';
+  T($('t9'),P(t,0,.6),0,(1-E.out(P(t,0,.6)))*30);
+  const wp=E.out(P(t,.3,1.0));
+  // browser window
+  const g=svgEl(svg,'g',{opacity:wp,transform:`translate(0 ${(1-wp)*50})`});
+  svgEl(g,'rect',{x:200,y:300,width:860,height:460,rx:30,fill:'#fff',stroke:COL.line,'stroke-width':3});
+  svgEl(g,'rect',{x:200,y:300,width:860,height:70,rx:30,fill:'#eef2f8'});svgEl(g,'rect',{x:200,y:340,width:860,height:30,fill:'#eef2f8'});
+  [0,1,2].forEach(i=>svgEl(g,'circle',{cx:240+i*34,cy:335,r:10,fill:[COL.coral,'#ffb830',COL.green][i]}));
+  // CSV file flying in
+  const fl=E.io(P(t,1.2,2.6)),fx=-60+(330+60)*fl,fy=420+60*fl,fs=1-.45*fl,fo=1-P(t,2.4,2.8);
+  const f=svgEl(svg,'g',{opacity:fo*P(t,1.0,1.3),transform:`translate(${fx} ${fy}) scale(${fs})`});
+  svgEl(f,'rect',{x:0,y:0,width:130,height:170,rx:16,fill:COL.teal});svgEl(f,'path',{d:'M90 0 L130 40 L90 40Z',fill:'rgba(255,255,255,.45)'});
+  svgEl(f,'text',{x:65,y:112,'text-anchor':'middle','font-size':40,'font-weight':800,fill:'#fff'}).textContent='CSV';
+  // chart appears inside, then rebuilds (gear sparks) and dissolves
+  const cp=E.io(P(t,2.6,4.0)),dis=P(t,4.6,5.6);
+  const pts=[];for(let i=0;i<=24;i++){pts.push([280+i*(700/24),680-(Math.sin(i*.5)*18+i*4.5)])}
+  svgEl(svg,'path',{d:path(part(pts,cp)),fill:'none',stroke:COL.indigo,'stroke-width':8,'stroke-linecap':'round',opacity:1-dis});
+  const bt=P(t,3.9,4.6);if(bt>0&&dis<1)svgEl(svg,'text',{x:630,y:440,'text-anchor':'middle','font-size':40,'font-weight':800,fill:COL.violet,opacity:bt*(1-dis)}).textContent='Model rebuilt';
+  // shield
+  const sp=pop(t,3.6,.7);const sg=svgEl(svg,'g',{opacity:clamp(sp*1.5),transform:`translate(1620 470) scale(${.5+.5*sp})`});
+  svgEl(sg,'path',{d:'M0 -90 L90 -55 L90 20 Q90 80 0 115 Q-90 80 -90 20 L-90 -55Z',fill:COL.teal});svgEl(sg,'rect',{x:-30,y:-12,width:60,height:50,rx:10,fill:'#fff'});svgEl(sg,'path',{d:'M-18 -12 v-16 a18 18 0 0 1 36 0 v16',stroke:'#fff','stroke-width':10,fill:'none'});
+  [['n1',4.5],['n2',5.0],['n3',5.5]].forEach(([id,at])=>{const p=pop(t,at-.1,.45);T($(id),clamp(p*1.6),(1-p)*60,0,.7+.3*p)});
+  $('n1').style.left=$('n2').style.left=$('n3').style.left='1170px';
+  const gone=P(t,5.8,6.5);if(gone>0)svgEl(svg,'text',{x:630,y:545,'text-anchor':'middle','font-size':42,'font-weight':700,fill:COL.mute,opacity:gone}).textContent="Close the tab and it's gone.";
+  // dissolve into the pulse line
+  if(dis>0){for(let i=0;i<14;i++){const px=300+i*52,py=520+Math.sin(i*1.7)*120;svgEl(svg,'circle',{cx:px+(930-px)*dis*0,cy:py+(1010-py)*E.io(dis),r:10*(1-dis*.6),fill:i%2?COL.teal:COL.indigo,opacity:dis<1?1-dis*.2:0})}}
+}
+function sc10(t,sc){
+  const e=Math.max(0,t-(sc.vo_start-sc.start)-2.9);          // end-card timeline starts after "Support early."
+  const svg=$('s10svg');svg.innerHTML='';
+  const gl=E.out(P(t,0,1.2));T($('glow'),gl*(1-P(e,0,.6)),0,0,.8+.2*gl);
+  // two figures at a table
+  const fo=P(t,.3,1.0)*(1-P(e,0,.5)),bob=Math.sin(t*3)*2;
+  const person=(x,col,big)=>{const r=big?58:44;const g=svgEl(svg,'g',{opacity:fo,transform:`translate(${x} ${560+bob})`});svgEl(g,'rect',{x:-r-14,y:r+8,width:(r+14)*2,height:150,rx:50,fill:col});svgEl(g,'circle',{cx:0,cy:0,r:r,fill:col});svgEl(g,'circle',{cx:-r*.3,cy:-4,r:5.5,fill:'#fff'});svgEl(g,'circle',{cx:r*.3,cy:-4,r:5.5,fill:'#fff'});svgEl(g,'path',{d:`M${-r*.28} ${r*.32} q${r*.28} ${r*.3} ${r*.56} 0`,stroke:'#fff','stroke-width':5,fill:'none','stroke-linecap':'round'})};
+  person(760,COL.indigo,true);person(1160,COL.teal,false);
+  svgEl(svg,'rect',{x:600,y:760,width:720,height:26,rx:13,fill:'#16202e',opacity:fo*.85});
+  // heart pulse above them
+  const hb=P(t,1.4,2.0);const hs=1+.12*Math.max(0,Math.sin(t*6.28));const h=svgEl(svg,'g',{opacity:hb*(1-P(e,0,.5)),transform:`translate(960 380) scale(${hs*(.5+.5*hb)})`});
+  svgEl(h,'path',{d:'M0 60 C-110 -10 -70 -80 0 -30 C70 -80 110 -10 0 60Z',fill:COL.coral});
+  // wipe to end card
+  const w=E.io(P(e,0,.9));const size=w*2600;$('wipe').style.width=size+'px';$('wipe').style.height=size+'px';
+  const ec=$('endc');ec.style.opacity=P(e,.5,1.1);
+  const lp=pop(e,.7,.7);$('logo').style.transform=`scale(${.4+.6*lp}) translateY(${Math.sin(t*6.28)*0})`;
+  $('url').style.transform=`translateX(-50%) scale(${.9+.1*pop(e,1.8,.6)})`;$('url').style.opacity=P(e,1.7,2.2);
+  return e;
+}
+/* ---------- render ---------- */
+function render(t){
+  let endcard=0;
+  SC.forEach((s,i)=>{const el=$('s'+s.id);const lt=t-s.start;const last=i===SC.length-1;
+    const o=(lt<-.01||lt>s.dur+.5)?0:Math.min(1,P(lt,-.01,.4))*(last?1:1-P(lt,s.dur-.1,s.dur+.4));
+    el.style.opacity=o;el.style.visibility=o>0?'visible':'hidden';
+    if(o>0){[sc1,sc2,sc3,sc4,sc5,sc6,sc7,sc8,sc9][i]?.(Math.max(lt,0));if(last)endcard=sc10(lt,s)>.5?1:0}});
+  // persistent overlays
+  const b=$('brand');b.style.opacity=P(t,S(2).start+.5,S(2).start+1.2)*(1-endcard);
+  $('proto').style.opacity=P(t,S(4).start+.5,S(4).start+1)*(1-endcard);
+  ecg(t,endcard?0:(t<S(3).start+1?0:58));
+  $('ecgl').setAttribute('stroke',endcard?'#ffffff':'url(#eg)');$('ecgl').style.opacity=endcard?.8:1;
+  // captions
+  const cap=$('cap');let shown=false;
+  SC.forEach(s=>{const a=s.vo_start-.05,b2=s.vo_start+s.vo_dur+.25;if(t>=a&&t<=b2&&s.id<10){cap.textContent=s.text;cap.style.opacity=Math.min(P(t,a,a+.25),1-P(t,b2-.25,b2));shown=true}});
+  if(!shown){cap.style.opacity=0}
+  window.__t=t;
+}
+window.render=render;window.TOTAL=TL.total;render(0);
+</script></body></html>
