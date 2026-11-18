@@ -12,6 +12,7 @@ python3 -m pulse.simulate          # data/sample_school_upload.csv (+ hidden gro
 python3 -m pulse.template          # data/school_upload_template.{csv,xlsx}
 python3 -m pulse.evaluate          # frequency study -> data/evaluation.csv
 python3 -m pulse.evaluate --study rebuild   # fixed vs rebuilt model
+python3 -m pulse.minimum_data      # how little data works (~4 min) -> data/minimum_data.csv
 python3 -m pytest                  # unit + Python/JS parity tests
 python3 -m http.server             # then open http://localhost:8000/web/
 ```
@@ -49,6 +50,21 @@ defaults) to about 14% (rebuilt) with ~0.1 weeks less lead time and unchanged de
 - \`web/index.html\`: dashboard (multi-file upload, in-memory, "Forget all data").
 - \`web/methodology.html\`: methodology with interactive demos that run the real engine. Refresh its embedded results with
   \`python3 -m pulse.evaluate && python3 -m pulse.evaluate --study rebuild && python3 -m pulse.build_site\`.
+
+## Small data: how much does a teacher need?
+Teachers can type scores straight into the dashboard (`S01, 7.5, 7.0, 6.1`) with no attendance or spreadsheet; the dashboard shows a readiness tier,
+an **Outlook** column and a forecast plot (4 weeks ahead, ~80% band) per student. With 8 or fewer screenings per student the model switches to a more
+sensitive **early mode** (decline 0.8 / sharp drop 1.2 / floor 5.5). Groups under 5 students skip the class adjustment because the median would absorb the student's own decline.
+
+| Screenings per student | Tier | Simulation (class of 10-30) |
+|---|---|---|
+| under 3 | Not enough | no trend possible |
+| 3-4 | Early signals | ~half of flags false; real declines barely visible yet |
+| 5-7 | Usable (**recommended minimum: 5 screenings, 10+ students; 6 students absolute minimum**) | 45-70% of declining students caught, 1-4% of healthy flagged, 69-91% of flags real |
+| 8+ | Reliable | 76-92% caught, 0.2-4% healthy flagged, 81-98% of flags real |
+
+Forecast: the 80% band held about 77% of the time (65-84%); 3-weeks-ahead error is 0.6-0.9 points with 5+ screenings (about 1.2 with 3).
+Classes of 4 gave up to 19% false alarms, hence the 6-student minimum. All figures are synthetic (single class, ~20% declining, noise sd 0.45).
 
 ## Deploy (Vercel)
 Static site, no build step: \`vercel.json\` serves \`web/\` with clean URLs (\`/\` dashboard, \`/methodology\`) and security headers.

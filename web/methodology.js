@@ -85,7 +85,7 @@ function minTable(){
   const m=(window.EVAL||{}).minimum||[];if(!m.length)return;
   const metric=$('mMetric').value,sizes=[...new Set(m.map(r=>r.students))].sort((a,b)=>a-b),weeks=[...new Set(m.map(r=>r.weeks))].sort((a,b)=>a-b).filter(w=>w>=4);
   const good=metric==='false_alarm'?v=>1-Math.min(1,v/0.1):metric==='band_coverage'?v=>1-Math.min(1,Math.abs(v-0.8)/0.15):v=>v;
-  const cell=(r)=>{const v=r[metric];if(v==null)return '<td>-</td>';const g=Math.max(0,Math.min(1,good(v)));
+  const cell=(r)=>{const v=r[metric];if(v==null||(metric==='sensitivity'&&r.declining_per_class<0.3))return '<td style="text-align:center;color:var(--mute)" title="too few declining students to measure">n/a</td>';const g=Math.max(0,Math.min(1,good(v)));
     return `<td style="background:color-mix(in srgb,var(--teal) ${Math.round(g*70)}%,var(--card));text-align:center;font-weight:600">${Math.round(v*100)}%</td>`};
   $('mTable').innerHTML=`<thead><tr><th>Students in class</th>${weeks.map(w=>`<th style="text-align:center">${w} screenings</th>`).join('')}</tr></thead><tbody>${sizes.map(n=>`<tr><td><b>${n}</b></td>${weeks.map(w=>cell(m.find(r=>r.students===n&&r.weeks===w)||{})).join('')}</tr>`).join('')}</tbody>`;
   $('mNote').textContent={sensitivity:'Share of students who had fallen at least 1.5 points below their own starting level that are currently Orange/Red. Early weeks are low partly because declines have only just begun.',
