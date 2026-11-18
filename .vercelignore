@@ -1,0 +1,6 @@
+pulse/
+tests/
+data/
+__pycache__/
+.pytest_cache/
+requirements.txt

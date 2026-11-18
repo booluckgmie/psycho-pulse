@@ -50,6 +50,16 @@ defaults) to about 14% (rebuilt) with ~0.1 weeks less lead time and unchanged de
 - \`web/methodology.html\`: methodology with interactive demos that run the real engine. Refresh its embedded results with
   \`python3 -m pulse.evaluate && python3 -m pulse.evaluate --study rebuild && python3 -m pulse.build_site\`.
 
+## Deploy (Vercel)
+Static site, no build step: \`vercel.json\` serves \`web/\` with clean URLs (\`/\` dashboard, \`/methodology\`) and security headers.
+The CSP allows only same-origin scripts and requests (\`connect-src 'self'\`), so the "nothing leaves your browser" claim is enforced by the browser too.
+\`\`\`bash
+npm i -g vercel && vercel          # preview;  vercel --prod  to publish
+\`\`\`
+Or import the GitHub repo in Vercel: Framework **Other**, leave build/install commands empty (they come from \`vercel.json\`).
+Before deploying run \`python3 -m pulse.build_site\` so the embedded study results and sample file are current (\`tests/test_deploy.py\` checks the sample).
+Python code and tests are excluded via \`.vercelignore\`; they are not needed in production.
+
 ## Limits and safeguards
 - Adjusted scores are relative to each class's median over the uploaded period, so a long class-wide dip lowers that class's adjusted level by up to ~1 point.
 - Synthetic data only. Validate on anonymised real data before any decision.
