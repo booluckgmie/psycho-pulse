@@ -11,6 +11,7 @@ pip install -r requirements.txt
 python3 -m pulse.simulate          # data/sample_school_upload.csv (+ hidden ground truth)
 python3 -m pulse.template          # data/school_upload_template.{csv,xlsx}
 python3 -m pulse.evaluate          # frequency study -> data/evaluation.csv
+python3 -m pulse.evaluate --study rebuild   # fixed vs rebuilt model
 python3 -m pytest                  # unit + Python/JS parity tests
 python3 -m http.server             # then open http://localhost:8000/web/
 ```
@@ -35,7 +36,22 @@ weekly (no env. adjustment)     1.000          0.997       4.118        0.174
 *detected* = at-risk students ever flagged · *before_crisis* = flagged before latent score < 4.5 · *lead_weeks* = mean weeks of warning · *false_alarm* = healthy students flagged at least once.
 Thresholds were tuned on this same synthetic generator, so these numbers show the mechanism, not real-world performance.
 
+## Rebuild, don't store
+Every upload (and every extra file added in the same session) rebuilds the model from scratch: \`detect.rebuild()\` re-estimates the
+decline, sharp-drop and attendance thresholds from that school's noise level and attendance norm, blended with the defaults by
+\`w = rows / (rows + 500)\`. The low-score floor (5.0) is deliberately **not** learned; learning it cost about 15 points of early detection.
+Nothing is written to disk or browser storage; \`tests/test_rebuild.py\` fails the build if the web code ever uses storage, cookies or network calls.
+
+\`python3 -m pulse.evaluate --study rebuild\` (40 schools per size, varied noise/level, weekly screening): false alarms fall from about 17% (fixed
+defaults) to about 14% (rebuilt) with ~0.1 weeks less lead time and unchanged detection (99%). Gains grow with data and vanish with very little data, as designed.
+
+## Pages
+- \`web/index.html\`: dashboard (multi-file upload, in-memory, "Forget all data").
+- \`web/methodology.html\`: methodology with interactive demos that run the real engine. Refresh its embedded results with
+  \`python3 -m pulse.evaluate && python3 -m pulse.evaluate --study rebuild && python3 -m pulse.build_site\`.
+
 ## Limits and safeguards
+- Adjusted scores are relative to each class's median over the uploaded period, so a long class-wide dip lowers that class's adjusted level by up to ~1 point.
 - Synthetic data only. Validate on anonymised real data before any decision.
 - Weekly screening trades earlier warning for more false alarms; alerts are a prompt for a private, supportive conversation, never a label or diagnosis.
 - Use anonymous IDs only. Never upload names or MyKad. Restrict dashboard access to counsellors and school leaders.

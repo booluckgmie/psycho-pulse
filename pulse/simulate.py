@@ -11,12 +11,12 @@ EVENTS = {6: "Mid-term test", 7: "Mid-term test", 11: "Exam week", 12: "Exam wee
 
 
 def simulate(n_students=120, n_weeks=12, risk_rate=0.17, seed=7,
-             teacher_change_week=6, affected_class="5B"):
+             teacher_change_week=6, affected_class="5B", noise_sd=0.45, base_mean=7.4):
     rng = np.random.default_rng(seed)
     classes = ["5A", "5B", "5C", "5D"]
     sid = [f"S{i + 1:03d}" for i in range(n_students)]
     cls = {s: classes[i % len(classes)] for i, s in enumerate(sid)}
-    base = rng.normal(7.4, 0.8, n_students).clip(4.5, 9.5)
+    base = rng.normal(base_mean, 0.8, n_students).clip(4.5, 9.5)
     at_risk = rng.random(n_students) < risk_rate
     onset = rng.integers(2, max(3, n_weeks // 2) + 1, n_students)
     slope = rng.uniform(0.25, 0.55, n_students)
@@ -33,7 +33,7 @@ def simulate(n_students=120, n_weeks=12, risk_rate=0.17, seed=7,
                 env -= 0.4
             if cls[s] == affected_class and w >= teacher_change_week:
                 env -= 1.2 * np.exp(-(w - teacher_change_week) / 6.0)
-            score = float(np.clip(latent + env + rng.normal(0, 0.45), 1, 10))
+            score = float(np.clip(latent + env + rng.normal(0, noise_sd), 1, 10))
             dist = max(0.0, base[i] - latent)
             att = float(np.clip(96 - 5 * dist + rng.normal(0, 2), 50, 100))
             late = int(np.clip(rng.poisson(0.6 + 0.9 * dist), 0, 10))

@@ -2,7 +2,7 @@
 (tests/test_parity.py checks the two produce identical alerts)."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 import pandas as pd
@@ -118,3 +118,65 @@ def school_shift_weeks(df: pd.DataFrame, z: float = 2.0) -> pd.DataFrame:
     mu, sd = wk.mean(), wk.std(ddof=0) or 1.0
     flagged = wk[(wk - mu).abs() > z * sd]
     return pd.DataFrame({"week": flagged.index, "school_median": flagged.values, "z": ((flagged - mu) / sd).values})
+
+
+# ---------------------------------------------------------------------------
+# Model rebuild. Called on every upload; the result lives only in memory.
+# ---------------------------------------------------------------------------
+PRIOR_OBS = 500  # rows needed before the data outweighs the built-in defaults
+
+# ratios implied by the defaults (tuned on noise sd ~0.45, baseline spread ~0.8)
+_TREND_K, _SHARP_K, _LOW_K = 3.55, 4.45, 3.0
+
+
+def _mad_sd(x) -> float:
+    x = np.asarray(x, float)
+    return 1.4826 * float(np.median(np.abs(x - np.median(x)))) if len(x) else 0.0
+
+
+def rebuild(df: pd.DataFrame, base: Config = Config(), prior_obs: int = PRIOR_OBS, adapt_low: bool = False):
+    """Re-estimate thresholds from the uploaded data only.
+
+    noise      robust sd of week-to-week change in adjusted score
+    spread     robust sd of students' starting levels
+    Targets scale with those, then blend with defaults by data volume
+    w = n / (n + prior_obs), so small uploads stay near the defaults.
+    Returns (Config, report). Nothing is stored.
+    """
+    df = validate(df)
+    df["adjusted"] = df["score"] - environment_effect(df, base)
+    diffs, starts = [], []
+    for _, g in df.groupby("student_id"):
+        a = g["adjusted"].to_numpy()
+        diffs.extend(np.diff(a))
+        if len(a) >= base.baseline_n:
+            starts.append(a[: base.baseline_n].mean())
+    n = len(df)
+    w = n / (n + prior_obs)
+    centre = float(np.median(starts)) if starts else float(df["score"].median())
+    noise = _mad_sd(diffs) / np.sqrt(2) if len(diffs) >= 20 else None
+    spread = _mad_sd(starts) if len(starts) >= 20 else None
+    att_c, att_s = float(df["attendance_pct"].median()), _mad_sd(df["attendance_pct"])
+
+    def blend(default, target, lo, hi):
+        if target is None or not np.isfinite(target) or target <= 0:
+            return default
+        return round(float(w * np.clip(target, lo, hi) + (1 - w) * default), 4)
+
+    fitted = replace(
+        base,
+        low_score=blend(base.low_score, None if (not adapt_low or spread in (None, 0)) else centre - _LOW_K * spread, 3.5, 6.0),
+        trend_drop=blend(base.trend_drop, None if not noise else _TREND_K * noise, 0.8, 2.5),
+        sharp_drop=blend(base.sharp_drop, None if not noise else _SHARP_K * noise, 1.2, 3.5),
+        low_attendance=blend(base.low_attendance, None if att_s == 0 else att_c - 3 * att_s, 70, 90),
+    )
+    report = dict(rows=n, students=int(df["student_id"].nunique()), weeks=int(df["week"].nunique()),
+                  confidence=round(w, 3), noise_sd=None if noise is None else round(float(noise), 3),
+                  start_level=round(centre, 2), start_spread=None if spread is None else round(float(spread), 3))
+    return fitted, report
+
+
+def analyse(df: pd.DataFrame):
+    """Rebuild the model from this data, then score the students with it."""
+    cfg, report = rebuild(df)
+    return latest_alerts(df, cfg), cfg, report

@@ -1,0 +1,6 @@
+students,data_rows,fixed_before_crisis,fixed_false_alarm,fixed_lead_weeks,rebuilt_before_crisis,rebuilt_false_alarm,rebuilt_lead_weeks
+15,180,0.912,0.194,2.345,0.912,0.184,2.345
+30,360,0.943,0.192,2.731,0.93,0.162,2.662
+60,720,0.987,0.177,2.782,0.984,0.147,2.611
+120,1440,0.993,0.172,2.858,0.992,0.137,2.73
+240,2880,0.992,0.171,2.798,0.99,0.136,2.653

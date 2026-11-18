@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Psychometric-Pulse Methodology</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.step{display:flex;gap:14px;align-items:flex-start}
+.step .n{flex:none;width:38px;height:38px;border-radius:12px;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800}
+.idea{border-top:5px solid var(--c)}
+.idea .ic{font-size:26px}
+.bar{display:grid;grid-template-columns:150px 1fr 56px;gap:10px;align-items:center;margin:7px 0;font-size:14px}
+.bar .track{height:16px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar .track i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.bar b{text-align:right}
+.demo{background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 9%,var(--card)),color-mix(in srgb,var(--violet) 9%,var(--card)))}
+.out{font-size:18px;font-weight:700;margin:6px 0}
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.ladder div{padding:12px 6px;border-radius:12px;color:#fff;font-weight:700}
+.ladder small{display:block;font-weight:500;opacity:.92;font-size:12px;margin-top:3px}
+code{background:color-mix(in srgb,var(--accent) 12%,transparent);padding:1px 6px;border-radius:6px;font-size:.92em}
+.formula{font-family:ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;overflow-x:auto;margin:8px 0}
+h2.big{font-size:26px;letter-spacing:-.02em;margin:34px 0 4px}
+@media(max-width:560px){.bar{grid-template-columns:96px 1fr 48px}.ladder{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="brand" href="index.html"><i></i>Psychometric-Pulse</a>
+  <a class="l" href="index.html">Dashboard</a>
+  <a class="l on" href="methodology.html">Methodology</a>
+  <span class="sp"></span><span class="pill">&#9679; Nothing is saved</span>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <h1>How Psychometric-Pulse thinks</h1>
+  <p>A short weekly check-in, a fair comparison, and a model that rebuilds itself from each school's own data. Play with the demos below, which run the real detection engine.</p>
+  <span class="tag">Notice early. Support early.</span>
+</div></header>
+
+<main class="wrap">
+
+<h2 class="big">The idea in 30 seconds</h2>
+<div class="grid g3">
+  <div class="card idea" style="--c:var(--teal)"><div class="ic">&#128337;</div><h3>Ask more often, ask less</h3><p class="sub">A 5-question weekly pulse replaces a long yearly test. Small changes show up while there is still time to help.</p></div>
+  <div class="card idea" style="--c:var(--violet)"><div class="ic">&#9878;&#65039;</div><h3>Compare fairly</h3><p class="sub">If a respected teacher leaves, a whole class dips. The model removes that shared movement so it only flags what is different about the student.</p></div>
+  <div class="card idea" style="--c:var(--coral)"><div class="ic">&#129309;</div><h3>Support, never label</h3><p class="sub">An alert is a prompt for a private conversation with a counsellor. It is never a diagnosis and never goes to parents automatically.</p></div>
+</div>
+
+<h2 class="big">From pulse check to alert</h2>
+<div class="card">
+  <div class="grid">
+    <div class="step"><span class="n">1</span><div><h3>Collect</h3><p class="sub" style="margin:0">One row per student per week: pulse score (1-10), attendance %, late submissions, plus school-level notes such as exam weeks and teacher transfers. IDs are anonymous.</p></div></div>
+    <div class="step"><span class="n">2</span><div><h3>Remove the environment</h3><p class="sub" style="margin:0">For every class and week, take the median score and subtract how far it sits from that class's usual level. What is left is the student's <b>adjusted score</b>. Small classes fall back to the whole-school effect.</p><div class="formula">adjusted = score &minus; (class-week median &minus; class overall median)</div></div></div>
+    <div class="step"><span class="n">3</span><div><h3>Look for signals</h3><p class="sub" style="margin:0"><b>Low</b>: adjusted score below the floor (5.0). <b>Decline</b>: three screenings in a row going down, smoothed, by at least the trend threshold. <b>Sharp drop</b>: far below the student's own first three weeks.</p></div></div>
+    <div class="step"><span class="n">4</span><div><h3>Grade the alert</h3><p class="sub" style="margin:0">Signals are combined with attendance and late work, so one bad day never triggers a red flag.</p>
+      <div class="ladder" style="margin-top:10px">
+        <div style="background:var(--green)">Green<small>no signal</small></div>
+        <div style="background:var(--yellow)">Yellow<small>mild one-step drop</small></div>
+        <div style="background:var(--orange)">Orange<small>a signal fires</small></div>
+        <div style="background:var(--red)">Red<small>signal + attendance / late work</small></div>
+      </div></div></div>
+    <div class="step"><span class="n">5</span><div><h3>Rebuild</h3><p class="sub" style="margin:0">Every upload re-estimates the thresholds from that school's data, in memory, then forgets the data. See "A model that rebuilds itself" below.</p></div></div>
+  </div>
+</div>
+
+<h2 class="big">Try it: a teacher leaves</h2>
+<div class="card demo">
+  <p class="sub">A class of 10 gets a new teacher in week 6. Slide the class-wide dip, then add a real decline for one student and see whether the model can tell them apart.</p>
+  <div class="grid g2">
+    <div>
+      <label>Class-wide dip after teacher change: <b id="aDipV">1.5</b> points</label>
+      <input type="range" id="aDip" min="0" max="2.5" step="0.1" value="1.5">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="aSelf"> Student S01 also has their own decline from week 5</label>
+      <div class="out" id="aOut"></div>
+      <p class="note" id="aWhy"></p>
+    </div>
+    <svg id="aChart" viewBox="0 0 520 240" role="img" aria-label="Raw versus adjusted score for student S01"></svg>
+  </div>
+</div>
+
+<h2 class="big">Try it: what makes a student turn red?</h2>
+<div class="card demo">
+  <p class="sub">A student scored about 7.5 for three weeks (baseline). Set the next three weeks and their attendance; eight stable classmates provide the comparison.</p>
+  <div class="grid g2">
+    <div>
+      <label>Week 4 score: <b id="bw4V">7.0</b></label><input type="range" id="bw4" min="1" max="10" step="0.1" value="7.0">
+      <label>Week 5 score: <b id="bw5V">6.0</b></label><input type="range" id="bw5" min="1" max="10" step="0.1" value="6.0">
+      <label>Week 6 score: <b id="bw6V">5.0</b></label><input type="range" id="bw6" min="1" max="10" step="0.1" value="5.0">
+      <label>Attendance: <b id="batV">92</b>%</label><input type="range" id="bat" min="55" max="100" step="1" value="92">
+      <label>Late submissions per week: <b id="blV">1</b></label><input type="range" id="bl" min="0" max="8" step="1" value="1">
+    </div>
+    <div>
+      <div class="out" id="bOut"></div><div id="bWhy" style="margin:6px 0"></div>
+      <svg id="bChart" viewBox="0 0 520 200" role="img" aria-label="Student scores over six weeks"></svg>
+    </div>
+  </div>
+</div>
+
+<h2 class="big">A model that rebuilds itself</h2>
+<div class="card">
+  <p class="sub">Each school is different: some pulse scores are noisy, some schools score lower on average. A fixed rule would over-alert in a noisy school and under-alert in a calm one. So on every upload the model re-estimates its thresholds from that school's data alone.</p>
+  <div class="grid g2">
+    <div>
+      <h3>What is learned</h3>
+      <ul class="sub" style="padding-left:18px">
+        <li><b>Noise</b>: robust spread of week-to-week change in adjusted score. Sets the decline and sharp-drop thresholds, scaling with noise (<code>3.55 x noise</code> and <code>4.45 x noise</code>).</li>
+        <li><b>Attendance norm</b>: the school's own typical attendance sets what "low" means.</li>
+        <li><b>Not learned</b>: the low-score floor (5.0). It stays absolute so a school with generally low scores is not taught to ignore them. Tested: learning it cost about 15 points of early detection.</li>
+      </ul>
+      <div class="formula">rebuilt = w &times; learned + (1 &minus; w) &times; default<br>w = rows / (rows + 500)</div>
+    </div>
+    <div>
+      <h3>Confidence grows with data</h3>
+      <label>Rows uploaded: <b id="cRowsV">1440</b> (about <span id="cStu">120</span> students &times; 12 weeks)</label>
+      <input type="range" id="cRows" min="0" max="4000" step="20" value="1440">
+      <div class="meter" style="margin:10px 0 4px"><i id="cMeter" style="width:0"></i></div>
+      <p class="note" id="cNote"></p>
+      <p class="sub" style="margin-bottom:0">Example: a noisy school whose learned decline threshold is 2.3. The rebuilt value moves from the 1.6 default towards 2.3 as data arrives: <b id="cVal"></b></p>
+    </div>
+  </div>
+  <div class="card" style="margin:16px 0 0;background:var(--bg);box-shadow:none">
+    <h3>Privacy by design: rebuild, don't store</h3>
+    <p class="sub" style="margin:0">The model is a handful of numbers recomputed from the file you upload. The file is parsed in the browser tab, held in memory, and gone when you close the tab or press <b>Forget all data</b>. The code uses no cookies, no browser storage and makes no network requests with your data, and an automated test fails the build if that ever changes. Because nothing persists, a school that wants to keep improving the model simply uploads its files again, or several at once.</p>
+  </div>
+</div>
+
+<h2 class="big">What the synthetic evidence says</h2>
+<div class="grid g2">
+  <div class="card">
+    <h2>Does screening more often help?</h2>
+    <p class="sub">30 simulated schools &times; 120 students, 24 weeks, about 17% developing a decline.</p>
+    <h3 style="margin-top:14px">Weeks of warning before crisis</h3><div id="fLead"></div>
+    <h3 style="margin-top:14px">Healthy students flagged at least once</h3><div id="fFa"></div>
+    <p class="note">Termly screening finds most students after the crisis point (negative warning). Weekly with environment adjustment keeps most of the early warning while cutting false alarms by more than half.</p>
+  </div>
+  <div class="card">
+    <h2>Does rebuilding help?</h2>
+    <p class="sub">40 simulated schools per size, each with different noise and starting level. Fixed defaults vs rebuilt model, weekly screening.</p>
+    <h3 style="margin-top:14px">Healthy students flagged, by school size</h3><div id="rFa"></div>
+    <p class="note" id="rNote"></p>
+  </div>
+</div>
+
+<h2 class="big">Limits we state openly</h2>
+<div class="grid g3">
+  <div class="card"><h3>Synthetic data</h3><p class="sub">Thresholds were tuned on the same simulator that produced the evidence. The numbers prove the mechanism, not real-world accuracy. A pilot on anonymised real data is the next step.</p></div>
+  <div class="card"><h3>Trade-offs</h3><p class="sub">Earlier warning means more false alarms. The rebuild reduces them modestly (about 17% to 14%) and gives up roughly 0.1 weeks of lead time. Counsellor judgement stays in charge.</p></div>
+  <div class="card"><h3>Reference level</h3><p class="sub">Adjusted scores are measured against each class's typical level over the period uploaded. A long class-wide dip therefore pulls that class's adjusted scores down by up to about a point. A longer history or a logged baseline period would fix this.</p></div>
+  <div class="card"><h3>Fairness</h3><p class="sub">Before scaling, alert rates must be audited by gender, socioeconomic status, language and disability, and scores compared with counsellor assessments.</p></div>
+</div>
+<div class="card"><h2>Roadmap</h2><p class="sub" style="margin:0">12-week pilot in one school &rarr; compare alerts with counsellor judgement &rarr; tune &rarr; difference-in-differences for teacher transfers &rarr; fairness report &rarr; expand to 3-5 schools.</p></div>
+</main>
+<footer>Psychometric-Pulse &middot; synthetic-data prototype &middot; <a href="index.html">Open the dashboard</a></footer>
+
+<script src="ecg.js"></script>
+<script src="detect.js"></script>
+<script src="evaluation.js"></script>
+<script src="methodology.js"></script>
+</body>
+</html>

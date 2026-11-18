@@ -49,7 +49,10 @@ def main():
     ap.add_argument("--schools", type=int, default=30)
     ap.add_argument("--weeks", type=int, default=24)
     ap.add_argument("--out", default="data/evaluation.csv")
+    ap.add_argument("--study", choices=["frequency", "rebuild"], default="frequency")
     a = ap.parse_args()
+    if a.study == "rebuild":
+        return study_rebuild(a.schools)
     rows = []
     for name, step in FREQ.items():
         for adjust in (True, False):
@@ -61,6 +64,46 @@ def main():
     out = pd.DataFrame(rows)
     out.to_csv(a.out, index=False)
     print(out.to_string(index=False))
+
+
+
+# ---------------------------------------------------------------------------
+# Study 2: does rebuilding the model from a school's own data help?
+# Schools differ in noise and starting level; compare fixed defaults vs rebuilt.
+# ---------------------------------------------------------------------------
+def _score(tl, truth):
+    alerted = tl[tl["level_rank"] >= 2].groupby("student_id")["week"].min()
+    t = truth.set_index("student_id")
+    t["first_alert"] = alerted
+    t["crisis_week"] = pd.to_numeric(t["crisis_week"], errors="coerce")
+    risk, healthy = t[t.at_risk], t[~t.at_risk]
+    ok = risk.crisis_week.notna()
+    return dict(
+        before_crisis=float(((risk.first_alert <= risk.crisis_week) & ok).sum() / max(ok.sum(), 1)),
+        false_alarm=float(healthy.first_alert.notna().mean()),
+        lead_weeks=float((risk.crisis_week - risk.first_alert).dropna().mean()),
+    )
+
+
+def run_rebuild(seed, n_students, weeks=12):
+    rng = np.random.default_rng(1000 + seed)
+    df, truth = simulate(n_students=n_students, n_weeks=weeks, seed=seed,
+                         noise_sd=float(rng.uniform(0.3, 0.9)), base_mean=float(rng.uniform(6.6, 8.0)))
+    fixed = _score(detect.timeline(df, detect.Config()), truth)
+    cfg, _ = detect.rebuild(df)
+    rebuilt = _score(detect.timeline(df, cfg), truth)
+    return {f"fixed_{k}": v for k, v in fixed.items()} | {f"rebuilt_{k}": v for k, v in rebuilt.items()}
+
+
+def study_rebuild(schools=40, out="data/evaluation_rebuild.csv"):
+    rows = []
+    for n in (15, 30, 60, 120, 240):
+        res = pd.DataFrame([run_rebuild(s, n) for s in range(schools)]).mean().round(3)
+        rows.append(dict(students=n, data_rows=n * 12, **res.to_dict()))
+    out_df = pd.DataFrame(rows)
+    out_df.to_csv(out, index=False)
+    print(out_df.to_string(index=False))
+    return out_df
 
 
 if __name__ == "__main__":
