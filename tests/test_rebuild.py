@@ -10,7 +10,15 @@ def test_small_upload_stays_near_defaults():
     df, _ = simulate(n_students=6, n_weeks=4, seed=1)
     cfg, rep = detect.rebuild(df)
     assert rep["confidence"] < 0.15
-    assert abs(cfg.trend_drop - detect.Config().trend_drop) < 0.25
+    assert abs(cfg.trend_drop - detect.EARLY.trend_drop) < 0.25
+
+
+def test_mode_follows_history_length():
+    short, _ = simulate(n_students=12, n_weeks=5, seed=1, n_classes=1)
+    long_, _ = simulate(n_students=12, n_weeks=12, seed=1, n_classes=1)
+    assert detect.rebuild(short)[1]["mode"] == "early"
+    assert detect.rebuild(long_)[1]["mode"] == "standard"
+    assert detect.rebuild(short)[0].low_score == detect.EARLY.low_score
 
 
 def test_noisier_school_gets_looser_trend_threshold():
@@ -40,3 +48,9 @@ def test_web_code_never_persists_uploads():
             text = f.read_text()
             for b in banned:
                 assert b not in text, f"{b} found in {f.name}"
+
+
+def test_forecast_noise_is_shrunk_towards_default_on_small_data():
+    df, _ = simulate(n_students=10, n_weeks=4, seed=1, n_classes=1, noise_sd=0.1)
+    rep = detect.rebuild(df)[1]
+    assert rep["noise_sd"] < 0.3 and rep["noise_used"] > rep["noise_sd"] + 0.1

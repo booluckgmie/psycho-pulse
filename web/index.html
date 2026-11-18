@@ -35,6 +35,13 @@
   <p id="msg" class="note" role="status"></p>
 </div>
 
+<div class="card">
+  <h2>No spreadsheet? Type in a few scores</h2>
+  <p class="sub">One student per line: an anonymous ID, then scores for week 1, 2, 3&hellip; (1-10). Three scores per student is the minimum; five or more is recommended. Attendance and late work are optional.</p>
+  <textarea id="quick" rows="6" spellcheck="false" aria-label="Quick score entry" placeholder="class: 5A&#10;start: 1&#10;S01, 7.5, 7.2, 6.8, 6.1, 5.4&#10;S02, 7.0, 7.1, 7.0, 7.3, 7.1&#10;S03, 6.8, 6.9, 6.6, 6.8, 6.7"></textarea>
+  <div class="row" style="margin-top:8px"><button id="quickgo">Analyse these scores</button><span class="note">Optional lines: <code>class: 5A</code> and <code>start: 3</code> (first week number).</span></div>
+</div>
+
 <div id="out" hidden>
   <div class="card fade" id="modelcard">
     <h2>The model, rebuilt just now</h2>
@@ -48,6 +55,8 @@
       <div class="tbl"><table><thead><tr><th>Setting</th><th>Default</th><th>Rebuilt</th></tr></thead><tbody id="params"></tbody></table></div>
     </div>
   </div>
+
+  <div class="card fade" id="ready"></div>
 
   <div class="tiles fade" id="tiles"></div>
 
@@ -64,13 +73,15 @@
       <label>Show <select id="flt"><option value="2">Orange + Red</option><option value="1">Yellow and above</option><option value="0">Everyone</option></select></label>
       <label>Class <select id="cls"><option value="">All</option></select></label>
     </div>
-    <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>Latest</th><th>Adjusted</th><th>Why</th><th>Follow-up</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>Latest</th><th>Adjusted</th><th>Why</th><th>Outlook</th><th>Follow-up</th></tr></thead><tbody id="rows"></tbody></table></div>
     <p class="note">Alerts prompt a private, supportive conversation. They are not a diagnosis and must never be used to label a student. Click a row for the student's history.</p>
   </div>
 
   <div class="card fade" id="detail" hidden>
     <h2 id="dtitle"></h2>
-    <svg id="spark" viewBox="0 0 900 220" role="img" aria-label="Student score history"></svg>
+    <p class="sub" id="dsub"></p>
+    <svg id="spark" viewBox="0 0 900 260" role="img" aria-label="Student score history with forecast"></svg>
+    <p class="note">The shaded band is an approximate 80% range from a straight-line projection of the last few screenings. It is indicative only and gets wider the further ahead it looks.</p>
   </div>
 </div>
 </main>

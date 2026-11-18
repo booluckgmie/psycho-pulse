@@ -11,9 +11,9 @@ EVENTS = {6: "Mid-term test", 7: "Mid-term test", 11: "Exam week", 12: "Exam wee
 
 
 def simulate(n_students=120, n_weeks=12, risk_rate=0.17, seed=7,
-             teacher_change_week=6, affected_class="5B", noise_sd=0.45, base_mean=7.4):
+             teacher_change_week=6, affected_class="5B", noise_sd=0.45, base_mean=7.4, n_classes=4):
     rng = np.random.default_rng(seed)
-    classes = ["5A", "5B", "5C", "5D"]
+    classes = ["5A", "5B", "5C", "5D"][:n_classes]
     sid = [f"S{i + 1:03d}" for i in range(n_students)]
     cls = {s: classes[i % len(classes)] for i, s in enumerate(sid)}
     base = rng.normal(base_mean, 0.8, n_students).clip(4.5, 9.5)
@@ -46,6 +46,7 @@ def simulate(n_students=120, n_weeks=12, risk_rate=0.17, seed=7,
                 school_event=EVENTS.get(w, ""), counsellor_followup="No"))
         truth.append(dict(student_id=s, at_risk=bool(at_risk[i]),
                           onset_week=int(onset[i]) if at_risk[i] else None,
+                          slope=float(slope[i]) if at_risk[i] else 0.0, base=float(base[i]),
                           crisis_week=crisis_week))
     return pd.DataFrame(rows), pd.DataFrame(truth)
 

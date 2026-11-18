@@ -3,7 +3,9 @@
   const CFG = { low: 5.0, trendDrop: 1.6, sharpDrop: 2.0, baselineN: 3,
     lowAtt: 85, lateLimit: 3, minClass: 5 };
   const LEVELS = ["Green", "Yellow", "Orange", "Red"];
-  const REQUIRED = ["student_id", "class", "week", "score", "attendance_pct", "late_submissions"];
+  const REQUIRED = ["student_id", "week", "score"];
+  const EARLY = { low: 5.5, trendDrop: 0.8, sharpDrop: 1.2, baselineN: 3, lowAtt: 85, lateLimit: 3, minClass: 5 };
+  const EARLY_MAX = 8;
 
   const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
   function median(a) {
@@ -29,10 +31,11 @@
     if (!rows.length) throw new Error("File has no data rows");
     const miss = REQUIRED.filter(c => !(c in rows[0]));
     if (miss.length) throw new Error("Missing required columns: " + miss.join(", "));
-    const seen = new Set();
+    const seen = new Set(), num = (v, d) => (v === undefined || v === "" ? d : +v);
     return rows.map((r, i) => {
-      const o = { ...r, week: +r.week, score: +r.score, attendance_pct: +r.attendance_pct, late_submissions: +r.late_submissions };
-      if ([o.week, o.score, o.attendance_pct, o.late_submissions].some(Number.isNaN) || !r.student_id || !r.class)
+      const o = { ...r, class: r.class || "Class", week: +r.week, score: +r.score,
+        attendance_pct: num(r.attendance_pct, 100), late_submissions: num(r.late_submissions, 0) };
+      if ([o.week, o.score, o.attendance_pct, o.late_submissions].some(Number.isNaN) || !r.student_id)
         throw new Error("Row " + (i + 2) + " has blank or non-numeric required values");
       if (o.score < 1 || o.score > 10) throw new Error("Row " + (i + 2) + ": score must be 1-10");
       const k = o.student_id + "|" + o.week;
@@ -45,11 +48,12 @@
   function prep(rows, cfg) {
     const all = median(rows.map(r => r.score));
     const schoolWk = new Map([...group(rows, r => r.week)].map(([k, g]) => [k, median(g.map(r => r.score))]));
+    const schoolN = new Map([...group(rows, r => r.week)].map(([k, g]) => [k, g.length]));
     const clsAll = new Map([...group(rows, r => r.class)].map(([k, g]) => [k, median(g.map(r => r.score))]));
     const clsWk = new Map([...group(rows, r => r.class + "|" + r.week)].map(([k, g]) => [k, [median(g.map(r => r.score)), g.length]]));
     for (const r of rows) {
       const [m, n] = clsWk.get(r.class + "|" + r.week);
-      r.env_effect = n >= cfg.minClass ? m - clsAll.get(r.class) : schoolWk.get(r.week) - all;
+      r.env_effect = n >= cfg.minClass ? m - clsAll.get(r.class) : (schoolN.get(r.week) >= cfg.minClass ? schoolWk.get(r.week) - all : 0);
       r.adjusted = r.score - r.env_effect;
     }
     return rows;
@@ -59,8 +63,16 @@
   const PRIOR_OBS = 500, TREND_K = 3.55, SHARP_K = 4.45;
   const madSd = x => { if (!x.length) return 0; const m = median(x); return 1.4826 * median(x.map(v => Math.abs(v - m))); };
   const r4 = v => Math.round(v * 1e4) / 1e4;
-  function rebuild(rawRows, base = CFG) {
-    const rows = prep(validate(rawRows), base), diffs = [], starts = [];
+  function pickBase(rows) {
+    const per = [...group(rows, r => r.student_id)].map(([, g]) => new Set(g.map(r => r.week)).size);
+    const med = median(per);
+    return med <= EARLY_MAX ? [EARLY, "early", med] : [CFG, "standard", med];
+  }
+  function rebuild(rawRows, base = null) {
+    const valid = validate(rawRows);
+    let mode = "custom", med;
+    if (!base) [base, mode, med] = pickBase(valid);
+    const rows = prep(valid, base), diffs = [], starts = [];
     for (const [, g] of group(rows, r => r.student_id)) {
       g.sort((a, b) => a.week - b.week);
       const a = g.map(r => r.adjusted);
@@ -75,9 +87,10 @@
       trendDrop: blend(base.trendDrop, noise ? TREND_K * noise : null, 0.8, 2.5),
       sharpDrop: blend(base.sharpDrop, noise ? SHARP_K * noise : null, 1.2, 3.5),
       lowAtt: blend(base.lowAtt, attS ? attC - 3 * attS : null, 70, 90) };
-    const report = { rows: n, students: new Set(rows.map(r => r.student_id)).size,
+    const report = { mode, screenings: med, rows: n, students: new Set(rows.map(r => r.student_id)).size,
       weeks: new Set(rows.map(r => r.week)).size, confidence: +w.toFixed(3),
-      noise: noise == null ? null : +noise.toFixed(3) };
+      noise: noise == null ? null : +noise.toFixed(3),
+      noiseUsed: noise ? +(w * noise + (1 - w) * 0.45).toFixed(3) : 0.45 };
     return { cfg, report };
   }
 
@@ -114,6 +127,56 @@
     return last.sort((a, b) => b.level_rank - a.level_rank || a.adjusted - b.adjusted);
   }
 
-  const api = { CFG, LEVELS, parseCSV, validate, timeline, latestAlerts, rebuild };
+
+  // Indicative straight-line projection of the adjusted score. Mirrors pulse/detect.py forecast().
+  function forecast(weeks, adjusted, cfg, noise) {
+    const W = 6, H = 4, Z = 1.28, w = weeks.slice(-W), y = adjusted.slice(-W), n = y.length;
+    if (n < 3) return null;
+    noise = noise || 0.45;
+    const xb = mean(w), yb = mean(y), sxx = w.reduce((s, v) => s + (v - xb) ** 2, 0);
+    const slope = sxx ? w.reduce((s, v, i) => s + (v - xb) * (y[i] - yb), 0) / sxx : 0;
+    const rss = y.reduce((s, v, i) => s + (v - (yb + slope * (w[i] - xb))) ** 2, 0);
+    const sd = Math.max(Math.sqrt(rss / (n - 2)), noise), last = weeks[weeks.length - 1], points = [];
+    for (let k = 1; k <= H; k++) {
+      const x = last + k, m = yb + slope * (x - xb), se = sd * Math.sqrt(1 + 1 / n + (x - xb) ** 2 / sxx);
+      points.push({ week: x, mean: m, lo: m - Z * se, hi: m + Z * se });
+    }
+    const now = yb + slope * (last - xb);
+    const toFloor = slope < -0.05 && now > cfg.low ? (cfg.low - now) / slope : null;
+    return { slope, fittedNow: now, points, weeksToFloor: toFloor, n };
+  }
+
+  // How much can a teacher trust the output? Based on screenings per student and group size.
+  function readiness(rawRows) {
+    const rows = validate(rawRows), out = [];
+    for (const [cls, g] of group(rows, r => r.class)) {
+      const per = [...group(g, r => r.student_id)].map(([, x]) => new Set(x.map(r => r.week)).size);
+      const students = per.length, screenings = Math.min(...per), med = median(per);
+      let tier, advice;
+      if (med < 3) { tier = "Not enough"; advice = "Need at least 3 screenings per student before any trend can be judged. Only a single very low score can be noticed."; }
+      else if (med < 5) { tier = "Early signals"; advice = "Useful for obvious drops only. Forecast is rough. Add screenings weekly to reach 5."; }
+      else if (med < 8) { tier = "Usable"; advice = "Reasonable detection and forecasts. 8+ screenings gives much better coverage."; }
+      else { tier = "Reliable"; advice = "Enough history for stable detection and forecasts."; }
+      if (students < 6) advice += " With fewer than 6 students, alerts are unstable and class-wide effects cannot be separated from individual change. 10 or more is recommended.";
+      out.push({ class: cls, students, screenings, median: med, tier, advice });
+    }
+    return out.sort((a, b) => a.class.localeCompare(b.class));
+  }
+
+  // Teacher quick entry: "S01, 7.5, 7.0, 6.1" per line; optional "class: 5A" and "start: 3" lines.
+  function quickEntryToCSV(text) {
+    let cls = "Class", start = 1; const lines = ["student_id,class,week,score"];
+    for (const raw of text.split("\n")) {
+      const l = raw.trim(); if (!l) continue;
+      let m = l.match(/^class\s*:\s*(.+)$/i); if (m) { cls = m[1].trim(); continue; }
+      m = l.match(/^start\s*:\s*(\d+)$/i); if (m) { start = +m[1]; continue; }
+      const parts = l.split(/[\s,;]+/).map(x => x.trim()).filter(x => x !== "");
+      const id = parts.shift();
+      parts.forEach((v, i) => lines.push([id, cls, start + i, v].join(",")));
+    }
+    return lines.join("\n");
+  }
+
+  const api = { CFG, LEVELS, parseCSV, validate, timeline, latestAlerts, rebuild, forecast, readiness, quickEntryToCSV, EARLY };
   if (typeof module !== "undefined") module.exports = api; else root.Pulse = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -7,8 +7,9 @@ from dataclasses import dataclass, replace
 import numpy as np
 import pandas as pd
 
-REQUIRED = ["student_id", "class", "week", "score", "attendance_pct", "late_submissions"]
-OPTIONAL = ["teacher_change", "school_event", "counsellor_followup"]
+REQUIRED = ["student_id", "week", "score"]
+OPTIONAL = ["class", "attendance_pct", "late_submissions", "teacher_change", "school_event", "counsellor_followup"]
+DEFAULTS = {"class": "Class", "attendance_pct": 100, "late_submissions": 0, "teacher_change": 0, "school_event": "", "counsellor_followup": ""}
 LEVELS = ["Green", "Yellow", "Orange", "Red"]
 
 
@@ -30,12 +31,14 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     for c in OPTIONAL:
         if c not in df.columns:
-            df[c] = 0 if c == "teacher_change" else ""
+            df[c] = DEFAULTS[c]
     df["student_id"] = df["student_id"].astype(str)
-    df["class"] = df["class"].astype(str)
+    df["class"] = df["class"].astype(str).replace({"": "Class", "nan": "Class"})
     for c in ["week", "score", "attendance_pct", "late_submissions"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
-    bad = df[REQUIRED].isna().any(axis=1)
+    df["attendance_pct"] = df["attendance_pct"].fillna(100)
+    df["late_submissions"] = df["late_submissions"].fillna(0)
+    bad = df[REQUIRED].isna().any(axis=1) | (df["student_id"] == "")
     if bad.any():
         raise ValueError(f"{int(bad.sum())} rows have blank/non-numeric required values")
     if not df["score"].between(1, 10).all():
@@ -53,7 +56,9 @@ def environment_effect(df: pd.DataFrame, cfg: Config = Config()) -> pd.Series:
     Small classes fall back to the whole-school effect.
     """
     school_wk = df.groupby("week")["score"].transform("median")
-    school_eff = school_wk - df["score"].median()
+    school_n = df.groupby("week")["score"].transform("size")
+    # a median of fewer than min_class_size scores would absorb the student's own decline: skip adjustment
+    school_eff = (school_wk - df["score"].median()).where(school_n >= cfg.min_class_size, 0.0)
     cls_n = df.groupby(["class", "week"])["score"].transform("size")
     cls_wk = df.groupby(["class", "week"])["score"].transform("median")
     cls_all = df.groupby("class")["score"].transform("median")
@@ -123,6 +128,7 @@ def school_shift_weeks(df: pd.DataFrame, z: float = 2.0) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Model rebuild. Called on every upload; the result lives only in memory.
 # ---------------------------------------------------------------------------
+DEFAULT_NOISE = 0.45  # week-to-week score noise assumed until the data says otherwise
 PRIOR_OBS = 500  # rows needed before the data outweighs the built-in defaults
 
 # ratios implied by the defaults (tuned on noise sd ~0.45, baseline spread ~0.8)
@@ -134,7 +140,17 @@ def _mad_sd(x) -> float:
     return 1.4826 * float(np.median(np.abs(x - np.median(x)))) if len(x) else 0.0
 
 
-def rebuild(df: pd.DataFrame, base: Config = Config(), prior_obs: int = PRIOR_OBS, adapt_low: bool = False):
+EARLY = Config(low_score=5.5, trend_drop=0.8, sharp_drop=1.2)  # short histories: be more sensitive
+EARLY_MAX_SCREENINGS = 8  # median screenings per student at or below this -> early mode
+
+
+def pick_base(df: pd.DataFrame) -> tuple[Config, str, float]:
+    per = validate(df).groupby("student_id")["week"].nunique()
+    med = float(per.median())
+    return (EARLY, "early", med) if med <= EARLY_MAX_SCREENINGS else (Config(), "standard", med)
+
+
+def rebuild(df: pd.DataFrame, base: Config | None = None, prior_obs: int = PRIOR_OBS, adapt_low: bool = False):
     """Re-estimate thresholds from the uploaded data only.
 
     noise      robust sd of week-to-week change in adjusted score
@@ -144,6 +160,9 @@ def rebuild(df: pd.DataFrame, base: Config = Config(), prior_obs: int = PRIOR_OB
     Returns (Config, report). Nothing is stored.
     """
     df = validate(df)
+    mode, med = "custom", float(df.groupby("student_id")["week"].nunique().median())
+    if base is None:
+        base, mode, med = pick_base(df)
     df["adjusted"] = df["score"] - environment_effect(df, base)
     diffs, starts = [], []
     for _, g in df.groupby("student_id"):
@@ -170,8 +189,9 @@ def rebuild(df: pd.DataFrame, base: Config = Config(), prior_obs: int = PRIOR_OB
         sharp_drop=blend(base.sharp_drop, None if not noise else _SHARP_K * noise, 1.2, 3.5),
         low_attendance=blend(base.low_attendance, None if att_s == 0 else att_c - 3 * att_s, 70, 90),
     )
-    report = dict(rows=n, students=int(df["student_id"].nunique()), weeks=int(df["week"].nunique()),
+    report = dict(mode=mode, screenings=med, rows=n, students=int(df["student_id"].nunique()), weeks=int(df["week"].nunique()),
                   confidence=round(w, 3), noise_sd=None if noise is None else round(float(noise), 3),
+                  noise_used=round(float(w * noise + (1 - w) * DEFAULT_NOISE), 3) if noise else DEFAULT_NOISE,
                   start_level=round(centre, 2), start_spread=None if spread is None else round(float(spread), 3))
     return fitted, report
 
@@ -180,3 +200,41 @@ def analyse(df: pd.DataFrame):
     """Rebuild the model from this data, then score the students with it."""
     cfg, report = rebuild(df)
     return latest_alerts(df, cfg), cfg, report
+
+
+# ---------------------------------------------------------------------------
+# Forecast: indicative straight-line projection of a student's adjusted score.
+# ---------------------------------------------------------------------------
+FORECAST_MIN, FORECAST_WINDOW, FORECAST_HORIZON, FORECAST_Z = 3, 6, 4, 1.28  # z=1.28 -> ~80% band
+
+
+def forecast(weeks, adjusted, cfg: Config = Config(), noise: float | None = None):
+    """Least-squares line through the last <=6 adjusted scores, projected 4 weeks ahead.
+
+    The band uses the larger of the fit's own residual sd and the school noise
+    estimate, so 3 lucky points never give a falsely narrow band.
+    Returns None with fewer than 3 points.
+    """
+    w = np.asarray(weeks[-FORECAST_WINDOW:], float)
+    y = np.asarray(adjusted[-FORECAST_WINDOW:], float)
+    n = len(y)
+    if n < FORECAST_MIN:
+        return None
+    noise = DEFAULT_NOISE if not noise else noise
+    xbar, ybar = w.mean(), y.mean()
+    sxx = float(((w - xbar) ** 2).sum())
+    slope = float(((w - xbar) * (y - ybar)).sum() / sxx) if sxx else 0.0
+    resid = y - (ybar + slope * (w - xbar))
+    s = max(float(np.sqrt((resid ** 2).sum() / (n - 2))), noise)
+    last = float(weeks[-1])
+    pts = []
+    for k in range(1, FORECAST_HORIZON + 1):
+        x = last + k
+        mean = ybar + slope * (x - xbar)
+        se = s * float(np.sqrt(1 + 1 / n + (x - xbar) ** 2 / sxx))
+        pts.append(dict(week=x, mean=float(mean), lo=float(mean - FORECAST_Z * se), hi=float(mean + FORECAST_Z * se)))
+    now = ybar + slope * (last - xbar)
+    to_floor = None
+    if slope < -0.05 and now > cfg.low_score:
+        to_floor = float((cfg.low_score - now) / slope)
+    return dict(slope=slope, fitted_now=float(now), points=pts, weeks_to_floor=to_floor, n=n)
