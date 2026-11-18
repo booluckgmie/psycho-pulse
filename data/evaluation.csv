@@ -1,0 +1,6 @@
+frequency,detected,before_crisis,lead_weeks,false_alarm
+weekly,1.0,0.992,2.886,0.07
+weekly (no env. adjustment),1.0,0.997,4.118,0.174
+fortnightly,1.0,0.927,2.13,0.05
+monthly,0.998,0.705,0.813,0.027
+termly,0.539,0.171,-1.745,0.011

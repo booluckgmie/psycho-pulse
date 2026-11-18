@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Psychometric-Pulse</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mute:#667085;--line:#e4e7ec;--red:#d92d20;--orange:#f79009;--yellow:#eab308;--green:#12b76a;--accent:#2e6bd6}
+@media(prefers-color-scheme:dark){:root{--bg:#10141a;--card:#181e27;--ink:#e8ecf2;--mute:#94a0b4;--line:#2a3340;--accent:#6b9bf0}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0}.tag{color:var(--mute);margin:2px 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+button,.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+button.alt{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.tile{border:1px solid var(--line);border-radius:8px;padding:10px 12px}.tile b{display:block;font-size:26px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:600;font-size:13px}tr.click{cursor:pointer}tr.click:hover{background:var(--bg)}
+.badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;color:#fff}
+.note{color:var(--mute);font-size:13px}.err{color:var(--red);font-weight:600}
+svg{width:100%;height:auto;display:block}
+.tbl{overflow-x:auto}
+</style>
+</head>
+<body>
+<main>
+<h1>Psychometric-Pulse</h1>
+<p class="tag">Notice early. Support early. &middot; <i>Perhati awal. Sokong awal.</i></p>
+
+<div class="card">
+  <div class="row">
+    <input type="file" id="file" accept=".csv" aria-label="Upload school CSV">
+    <button class="alt" id="sample">Load sample data</button>
+    <span class="note">Processed entirely in your browser. Nothing is uploaded or stored. Use anonymous IDs only.</span>
+  </div>
+  <p id="msg" class="note"></p>
+</div>
+
+<div id="out" hidden>
+  <div class="card"><div class="tiles" id="tiles"></div></div>
+
+  <div class="card">
+    <h2 style="margin-top:0;font-size:17px">School trend: raw vs environment-adjusted</h2>
+    <svg id="trend" viewBox="0 0 900 260" role="img" aria-label="Weekly median score, raw and adjusted"></svg>
+    <p class="note" id="trendnote"></p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;font-size:17px">Students to follow up</h2>
+    <div class="row"><label>Show <select id="flt"><option value="2">Orange + Red</option><option value="1">Yellow and above</option><option value="0">Everyone</option></select></label>
+    <label>Class <select id="cls"><option value="">All</option></select></label></div>
+    <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>Latest</th><th>Adjusted</th><th>Why</th><th>Follow-up</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <p class="note">Alerts prompt a private, supportive conversation. They are not a diagnosis and must not be used to label a student.</p>
+  </div>
+
+  <div class="card" id="detail" hidden>
+    <h2 style="margin-top:0;font-size:17px" id="dtitle"></h2>
+    <svg id="spark" viewBox="0 0 900 220" role="img" aria-label="Student score history"></svg>
+  </div>
+</div>
+</main>
+<script src="detect.js"></script>
+<script>
+const COL={Red:'var(--red)',Orange:'var(--orange)',Yellow:'var(--yellow)',Green:'var(--green)'};
+const $=id=>document.getElementById(id);
+let TL=[],ALERTS=[];
+
+function load(text){
+  try{
+    const rows=Pulse.parseCSV(text);
+    TL=Pulse.timeline(rows);ALERTS=Pulse.latestAlerts(rows);
+    $('msg').textContent=`${new Set(TL.map(r=>r.student_id)).size} students, ${new Set(TL.map(r=>r.week)).size} weeks loaded.`;
+    $('msg').className='note';render();
+  }catch(e){$('msg').textContent=e.message;$('msg').className='err';$('out').hidden=true}
+}
+$('file').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(load)};
+$('sample').onclick=()=>fetch('../data/sample_school_upload.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(load)
+  .catch(()=>{$('msg').textContent='Sample needs a local server: run  python3 -m http.server  in the repo and open /web/. Or upload data/sample_school_upload.csv.';$('msg').className='err'});
+$('flt').onchange=$('cls').onchange=table;
+
+function render(){
+  $('out').hidden=false;
+  const cnt={Red:0,Orange:0,Yellow:0,Green:0};ALERTS.forEach(a=>cnt[a.level]++);
+  const env=ALERTS.filter(a=>a.env_explained).length;
+  $('tiles').innerHTML=['Red','Orange','Yellow','Green'].map(l=>`<div class="tile"><span class="dot" style="background:${COL[l]}"></span>${l}<b>${cnt[l]}</b></div>`).join('')
+    +`<div class="tile">Low score explained by school/class environment<b>${env}</b></div>`;
+  const cls=[...new Set(ALERTS.map(a=>a.class))].sort();
+  $('cls').innerHTML='<option value="">All</option>'+cls.map(c=>`<option>${c}</option>`).join('');
+  trend();table();
+}
+function why(a){const w=[];if(a.low)w.push('low score');if(a.trend)w.push('3-week decline');if(a.sharp)w.push('sharp drop vs own baseline');if(a.extra)w.push('attendance/late work');if(a.env_explained)w.push('raw dip explained by environment');return w.join(', ')||'-'}
+function table(){
+  const min=+$('flt').value,c=$('cls').value;
+  const list=ALERTS.filter(a=>a.level_rank>=min&&(!c||a.class===c));
+  $('rows').innerHTML=list.map(a=>`<tr class="click" data-id="${a.student_id}"><td>${a.student_id}</td><td>${a.class}</td>
+    <td><span class="badge" style="background:${COL[a.level]}">${a.level}</span></td><td>${a.score.toFixed(1)}</td><td>${a.adjusted.toFixed(1)}</td><td>${why(a)}</td><td>${a.counsellor_followup||'-'}</td></tr>`).join('')||'<tr><td colspan="7">No students at this level.</td></tr>';
+  document.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>detail(tr.dataset.id));
+}
+function line(pts,x,y,color,dash){return `<polyline fill="none" stroke="${color}" stroke-width="2" ${dash?'stroke-dasharray="5 4"':''} points="${pts.map(p=>x(p[0])+','+y(p[1])).join(' ')}"/>`}
+function chart(svg,series,events,w=900,h=260){
+  const L=40,R=12,T=12,B=28,wk=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort((a,b)=>a-b);
+  const x=v=>L+(v-wk[0])/(wk[wk.length-1]-wk[0]||1)*(w-L-R),y=v=>T+(10-v)/9*(h-T-B);
+  let s='';for(let v=1;v<=10;v+=3)s+=`<line x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="4" y="${y(v)+4}" fill="var(--mute)" font-size="11">${v}</text>`;
+  for(const v of wk)s+=`<text x="${x(v)}" y="${h-8}" font-size="11" fill="var(--mute)" text-anchor="middle">${v}</text>`;
+  for(const [week,label] of events)s+=`<line x1="${x(week)}" x2="${x(week)}" y1="${T}" y2="${h-B}" stroke="var(--mute)" stroke-dasharray="2 3"/><text x="${x(week)+3}" y="${T+10}" font-size="10" fill="var(--mute)">${label}</text>`;
+  s+=`<line x1="${L}" x2="${w-R}" y1="${y(5)}" y2="${y(5)}" stroke="var(--red)" stroke-opacity=".4"/>`;
+  series.forEach((sr,i)=>{s+=line(sr.pts,x,y,sr.color,sr.dash)+`<text x="${L+8+i*170}" y="${h-B-6}" font-size="11" fill="${sr.color}">${sr.name}</text>`});
+  svg.innerHTML=s;
+}
+function trend(){
+  const byWk={};TL.forEach(r=>{(byWk[r.week]=byWk[r.week]||{s:[],a:[],ev:''});byWk[r.week].s.push(r.score);byWk[r.week].a.push(r.adjusted);if(r.school_event)byWk[r.week].ev=r.school_event;if(+r.teacher_change)byWk[r.week].tc=1});
+  const med=a=>{a=[...a].sort((x,y)=>x-y);const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2};
+  const wks=Object.keys(byWk).map(Number).sort((a,b)=>a-b);
+  const ev=wks.filter(w=>byWk[w].ev||byWk[w].tc).map(w=>[w,(byWk[w].tc?'Teacher change':byWk[w].ev)]);
+  chart($('trend'),[{name:'Raw median',color:'var(--mute)',dash:1,pts:wks.map(w=>[w,med(byWk[w].s)])},{name:'Adjusted median',color:'var(--accent)',pts:wks.map(w=>[w,med(byWk[w].a)])}],ev);
+  $('trendnote').textContent=ev.length?'Dotted verticals mark logged school events / teacher transfers. If many students dip there together, treat it as an environment effect first.':'No school events or teacher changes logged in this file.';
+}
+function detail(id){
+  const r=TL.filter(x=>x.student_id===id);$('detail').hidden=false;
+  $('dtitle').textContent=`${id} (${r[0].class}) - latest: ${r[r.length-1].level}`;
+  chart($('spark'),[{name:'Raw score',color:'var(--mute)',dash:1,pts:r.map(x=>[x.week,x.score])},{name:'Adjusted score',color:'var(--accent)',pts:r.map(x=>[x.week,x.adjusted])}],[],900,220);
+  $('detail').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
