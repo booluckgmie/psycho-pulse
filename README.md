@@ -78,6 +78,10 @@ Classes of 4 gave up to 19% false alarms, hence the 6-student minimum. All figur
 The dashboard reads `.xlsx` directly in the browser (`web/xlsx.js`, no libraries, nothing uploaded) and `.csv` with comma, semicolon or tab separators and decimal commas.
 Renaming the headings (`Week 5`, `Week 6`...) starts at a later week. Blank cells mean "not measured". Errors name the student and week (for example `S01, Week 4: score 11 must be between 1 and 10`). Files can be added one after another; they merge in memory.
 
+## Screens and phones
+The dashboard and methodology pages are responsive from 320px phones to wide desktops: wrapping navigation, 44px touch targets, 16px form fields (no iOS zoom-on-focus), a sticky student-ID column in the entry grid, student results as compact cards on phones, and charts that redraw at their real width (also after rotation) so labels stay readable.
+`tests/test_responsive.py` drives a real browser at 320, 360, 390, 768 and 1280px and fails on sideways scrolling, overflowing elements, small touch targets or unreadable chart text (needs node + playwright; skipped otherwise).
+
 ## Deploy (Vercel)
 Static site, no build step: \`vercel.json\` serves \`web/\` with clean URLs (\`/\` dashboard, \`/methodology\`) and security headers.
 The CSP allows only same-origin scripts and requests (\`connect-src 'self'\`), so the "nothing leaves your browser" claim is enforced by the browser too.

@@ -5,19 +5,24 @@ const gauss=r=>Math.sqrt(-2*Math.log(r()||1e-9))*Math.cos(2*Math.PI*r());
 const clip=v=>Math.min(10,Math.max(1,v));
 
 function lineChart(svg,series,w,h,marks=[],fc=null){
-  const L=30,R=8,T=10,B=24,wk=[...series[0].pts.map(p=>p[0]),...(fc?fc.points.map(p=>p.week):[])];
+  // draw at the real rendered width so text stays readable on phones
+  const bw=svg.getBoundingClientRect().width;w=Math.max(280,Math.round(bw||w));
+  const narrow=w<460;h=narrow?Math.max(230,Math.round(w*.72)):h;svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const FS=narrow?12.5:11.5,L=narrow?28:32,R=8,T=12,B=narrow?32:28,wk=[...series[0].pts.map(p=>p[0]),...(fc?fc.points.map(p=>p.week):[])];
   const x=v=>L+(v-wk[0])/(wk[wk.length-1]-wk[0])*(w-L-R),y=v=>T+(10-v)/9*(h-T-B);
-  let s='';for(let v=1;v<=10;v+=3)s+=`<line x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="2" y="${y(v)+4}" fill="var(--mute)" font-size="10">${v}</text>`;
-  wk.forEach(v=>s+=`<text x="${x(v)}" y="${h-7}" font-size="10" fill="var(--mute)" text-anchor="middle">${v}</text>`);
-  marks.forEach(([wv,t])=>s+=`<line x1="${x(wv)}" x2="${x(wv)}" y1="${T}" y2="${h-B}" stroke="var(--mute)" stroke-dasharray="3 3"/><text x="${x(wv)+3}" y="${T+9}" font-size="10" fill="var(--mute)">${t}</text>`);
-  s+=`<line x1="${L}" x2="${w-R}" y1="${y(5)}" y2="${y(5)}" stroke="var(--red)" stroke-opacity=".5"/><text x="${w-R-4}" y="${y(5)-4}" font-size="10" fill="var(--red)" text-anchor="end">floor 5.0</text>`;
+  let s='';for(let v=1;v<=10;v+=3)s+=`<line x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="2" y="${y(v)+4}" fill="var(--mute)" font-size="${FS}">${v}</text>`;
+  const step=Math.ceil(wk.length/Math.max(4,Math.floor((w-L-R)/34)));
+  wk.forEach((v,i)=>{if(i%step===0)s+=`<text x="${x(v)}" y="${h-8}" font-size="${FS}" fill="var(--mute)" text-anchor="middle">${v}</text>`});
+  marks.forEach(([wv,t])=>{const right=x(wv)>w*.65;s+=`<line x1="${x(wv)}" x2="${x(wv)}" y1="${T}" y2="${h-B}" stroke="var(--mute)" stroke-dasharray="3 3"/><text x="${x(wv)+(right?-4:4)}" y="${T+10}" font-size="${FS}" fill="var(--mute)" text-anchor="${right?'end':'start'}">${t}</text>`});
+  s+=`<line x1="${L}" x2="${w-R}" y1="${y(5)}" y2="${y(5)}" stroke="var(--red)" stroke-opacity=".5"/><text x="${w-R-4}" y="${y(5)-4}" font-size="${FS}" fill="var(--red)" text-anchor="end">floor 5.0</text>`;
   if(fc){const lim=v=>Math.min(10,Math.max(1,v)),last=series[series.length-1].pts.slice(-1)[0],P=fc.points;
     const poly=[[last[0],last[1]],...P.map(p=>[p.week,lim(p.hi)]),...P.map(p=>[p.week,lim(p.lo)]).reverse()];
     s+=`<polygon points="${poly.map(p=>x(p[0])+','+y(p[1])).join(' ')}" fill="var(--violet)" fill-opacity=".18"/>`;
     s+=`<polyline fill="none" stroke="var(--violet)" stroke-width="2.4" stroke-dasharray="6 5" points="${[[last[0],last[1]],...P.map(p=>[p.week,lim(p.mean)])].map(p=>x(p[0])+','+y(p[1])).join(' ')}"/>`}
+  const gap=Math.min(150,(w-L-R-8)/series.length);
   series.forEach((sr,i)=>{s+=`<polyline fill="none" stroke="${sr.c}" stroke-width="2.6" stroke-linejoin="round" ${sr.d?'stroke-dasharray="6 5"':''} points="${sr.pts.map(p=>x(p[0])+','+y(p[1])).join(' ')}"/>`;
     sr.pts.forEach(p=>s+=`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="3" fill="${sr.c}"/>`);
-    s+=`<text x="${L+6+i*150}" y="${h-B-6}" font-size="11" font-weight="600" fill="${sr.c}">${sr.n}</text>`});
+    s+=`<text x="${L+6+i*gap}" y="${h-B-8}" font-size="${FS}" font-weight="600" fill="${sr.c}">${sr.n}</text>`});
   svg.innerHTML=s;
 }
 const row=(id,cls,week,score,att=95,late=0)=>({student_id:id,class:cls,week:String(week),score:String(score),attendance_pct:String(att),late_submissions:String(late)});
@@ -79,6 +84,7 @@ function studies(){
 ['bw4','bw5','bw6','bat','bl'].forEach(i=>$(i).addEventListener('input',demoB));
 $('cRows').addEventListener('input',demoC);
 demoA();demoB();demoC();studies();
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{demoA();demoB()},150)});
 
 // ---- Minimum-data table ----------------------------------------------------
 function minTable(){
@@ -87,7 +93,7 @@ function minTable(){
   const good=metric==='false_alarm'?v=>1-Math.min(1,v/0.1):metric==='band_coverage'?v=>1-Math.min(1,Math.abs(v-0.8)/0.15):v=>v;
   const cell=(r)=>{const v=r[metric];if(v==null||(metric==='sensitivity'&&r.declining_per_class<0.3))return '<td style="text-align:center;color:var(--mute)" title="too few declining students to measure">n/a</td>';const g=Math.max(0,Math.min(1,good(v)));
     return `<td style="background:color-mix(in srgb,var(--teal) ${Math.round(g*70)}%,var(--card));text-align:center;font-weight:600">${Math.round(v*100)}%</td>`};
-  $('mTable').innerHTML=`<thead><tr><th>Students in class</th>${weeks.map(w=>`<th style="text-align:center">${w} screenings</th>`).join('')}</tr></thead><tbody>${sizes.map(n=>`<tr><td><b>${n}</b></td>${weeks.map(w=>cell(m.find(r=>r.students===n&&r.weeks===w)||{})).join('')}</tr>`).join('')}</tbody>`;
+  $('mTable').innerHTML=`<thead><tr><th>Class size</th><th colspan="${weeks.length}" style="text-align:center">Screenings per student</th></tr><tr><th></th>${weeks.map(w=>`<th style="text-align:center">${w}</th>`).join('')}</tr></thead><tbody>${sizes.map(n=>`<tr><td><b>${n}</b></td>${weeks.map(w=>cell(m.find(r=>r.students===n&&r.weeks===w)||{})).join('')}</tr>`).join('')}</tbody>`;
   $('mNote').textContent={sensitivity:'Share of students who had fallen at least 1.5 points below their own starting level that are currently Orange/Red. Early weeks are low partly because declines have only just begun.',
     false_alarm:'Share of healthy students currently Orange/Red. Lower is better; 3 to 5 in 100 means a teacher of 30 sees about one false alert.',
     precision:'Of all students flagged Orange/Red, the share whose decline has genuinely begun. Low at 4 screenings: be cautious acting on early alerts.',

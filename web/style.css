@@ -16,7 +16,7 @@ nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:color
 nav .wrap{display:flex;align-items:center;gap:20px;height:56px}
 nav .brand{font-weight:800;letter-spacing:-.02em;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:8px}
 nav .brand i{width:12px;height:12px;border-radius:50%;background:var(--grad);animation:beat 1.6s infinite}
-nav a.l{color:var(--mute);text-decoration:none;font-weight:600;font-size:14px;padding:6px 10px;border-radius:8px}
+nav a.l{min-height:40px;display:inline-flex;align-items:center;color:var(--mute);text-decoration:none;font-weight:600;font-size:14px;padding:6px 10px;border-radius:8px}
 nav a.l:hover,nav a.l.on{color:var(--ink);background:var(--card)}
 nav .sp{flex:1}
 .hero{background:var(--grad);color:#fff;position:relative;overflow:hidden}
@@ -86,7 +86,7 @@ textarea:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .formrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 14px}
 .formrow label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
 .formrow label.chk{flex-direction:row;align-items:center;gap:8px;font-size:14px;color:var(--ink);padding-bottom:8px}
-input[type=text],input[type=number],input:not([type]),select{font:inherit;font-size:15px;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:8px 10px}
+input[type=text],input[type=number],input:not([type]),select{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:8px 10px}
 .gridwrap{border:1.5px solid var(--line);border-radius:14px;max-height:430px;overflow:auto}
 #grid{border-collapse:separate;border-spacing:0}
 #grid th{position:sticky;top:0;background:var(--card);z-index:1;text-align:center;font-size:12px;border-bottom:2px solid var(--line)}
@@ -101,3 +101,106 @@ input[type=text],input[type=number],input:not([type]),select{font:inherit;font-s
 .step3 .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:10px;background:var(--grad);color:#fff;font-weight:800;margin-bottom:6px}
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .btn.alt{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+
+/* ====================== responsive ====================== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.wrap{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+@media (min-width:1280px){.wrap{max-width:1240px}}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(min(100%,128px),1fr))}
+.tbl{-webkit-overflow-scrolling:touch}
+.formula{white-space:pre-wrap;overflow-wrap:anywhere}
+/* sliders: big enough to grab on a phone */
+input[type=range]{-webkit-appearance:none;appearance:none;height:36px;background:transparent;cursor:pointer;margin:2px 0}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--accent))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--accent);margin-top:-10px;box-shadow:0 2px 6px rgba(22,32,46,.3)}
+input[type=range]::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--accent))}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--accent)}
+/* entry grid: student ID stays visible while scrolling across weeks */
+#grid th.idc,#grid td.idc{position:sticky;left:0;z-index:2;background:var(--card)}
+#grid th.idc{z-index:3}
+/* touch devices: 44px targets */
+@media (pointer:coarse){
+  button,.btn{min-height:44px}
+  nav a.l{min-height:44px;display:inline-flex;align-items:center}
+  #grid button.x{min-width:44px;min-height:44px}
+  #grid input{min-height:42px}
+  input[type=checkbox]{width:22px;height:22px}
+  .formrow label.chk{min-height:44px}
+}
+/* phones and small tablets */
+@media (max-width:640px){
+  body{font-size:15px}
+  nav{position:static}
+  nav .wrap{height:auto;flex-wrap:wrap;gap:6px 8px;padding-top:8px;padding-bottom:8px}
+  nav .brand{order:1;font-size:17px;white-space:nowrap}
+  nav .sp{display:none}
+  nav .pill{order:2;margin-left:auto;font-size:11px;padding:3px 9px;white-space:nowrap}
+  nav a.l{order:3;flex:1 1 40%;justify-content:center;text-align:center;min-height:44px;display:inline-flex;align-items:center;background:color-mix(in srgb,var(--card) 60%,transparent);border:1px solid var(--line)}
+  nav a.l.on{background:var(--card);box-shadow:var(--shadow)}
+  .hero .wrap{padding:24px 16px 42px}
+  .hero h1{font-size:clamp(27px,8.5vw,38px)}
+  .hero p{font-size:15.5px}
+  .hero .tag{font-size:13px;margin-top:12px}
+  .hero p.hero-long{display:none}
+  .hero .wrap{padding-bottom:36px}
+  .card{padding:16px;border-radius:14px;margin-bottom:14px}
+  .card h2{font-size:18px}
+  h2.big{font-size:22px;margin-top:26px}
+  .tile b{font-size:26px}
+  /* tabs on their own full-width row, helper buttons below */
+  .tabbar{flex-wrap:wrap;gap:8px;border-bottom:0;padding-bottom:0;align-items:stretch}
+  .tabbar .sp{display:none}
+  .tabs{flex:1 1 100%;border-bottom:2px solid var(--line)}
+  .tabs button{flex:1;white-space:nowrap;padding:12px 8px;font-size:14.5px;text-align:center}
+  .tabbar button.alt{flex:1 1 calc(50% - 4px);margin-bottom:0}
+  .formrow{gap:12px}
+  .formrow label{flex:1 1 calc(50% - 6px)}
+  .formrow label:first-child{flex:1 1 100%}
+  .formrow label.chk{flex:1 1 100%}
+  .formrow input:not([type=checkbox]),.formrow select{width:100%}
+  /* grid: compact cells, no row-number column */
+  #grid td.n,#grid thead th:first-child{display:none}
+  #grid th{white-space:nowrap;letter-spacing:0;padding:8px 2px;font-size:11px}
+  #grid input{width:58px;padding:7px 2px}
+  #grid input.id{width:96px}
+  #grid td{padding:4px 3px}
+  .actions .sp{display:none}
+  .actions button{flex:1 1 calc(50% - 6px)}
+  .actions #g_go{flex:1 1 100%;min-height:48px;font-size:16px}
+  .step3 .stack .btn{width:100%;text-align:center}
+  .stack{align-items:stretch}
+  .drop{padding:18px 14px}
+  /* tables become cards */
+  table.stack thead{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+  table.stack tr{border:1.5px solid var(--line);border-radius:14px;padding:6px 14px;margin:10px 0;background:var(--card)}
+  table.stack td{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border:0;padding:6px 0;text-align:right}
+  table.stack td::before{content:attr(data-label);flex:none;font-size:11px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding-top:3px}
+  table.stack td:first-child{font-size:16px}
+  /* compact student cards: name + level on top, three figures in a row */
+  table.students tr{display:grid;grid-template-columns:repeat(6,1fr);gap:6px 8px;padding:12px 14px}
+  table.students td{display:block;text-align:left;padding:0;width:auto}
+  table.students td::before{display:block;margin-bottom:2px;padding:0}
+  table.students td[data-label=Student]{grid-area:1/1/2/4;font-size:18px}
+  table.students td[data-label=Level]{grid-area:1/4/2/7;text-align:right}
+  table.students td[data-label=Student]::before,table.students td[data-label=Level]::before{display:none}
+  table.students td[data-label=Class]{grid-area:2/1/3/3}
+  table.students td[data-label=Latest]{grid-area:2/3/3/5}
+  table.students td[data-label=Adjusted]{grid-area:2/5/3/7}
+  table.students td[data-label=Why]{grid-area:3/1/4/7}
+  table.students td[data-label=Outlook]{grid-area:4/1/5/4}
+  table.students td[data-label=Follow-up]{grid-area:4/4/5/7;text-align:right}
+  #mTable td,#mTable th{padding:8px 3px;font-size:13px}
+  .note,.sub{font-size:13.5px}
+  footer{padding:20px 0 32px}
+}
+@media (max-width:380px){
+  .tabs button{font-size:13.5px}
+  .tile{padding:10px 12px}
+}
+@media (orientation:landscape) and (max-height:480px){
+  nav{position:static}
+  .hero .wrap{padding:18px 16px 34px}
+}

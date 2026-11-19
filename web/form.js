@@ -34,7 +34,7 @@
   }
   function renderHead() {
     const s = startWeek();
-    let h = '<tr><th>#</th><th scope="col">Student ID</th>';
+    let h = '<tr><th>#</th><th scope="col" class="idc">Student ID</th>';
     for (let i = 0; i < nW; i++) h += `<th scope="col">Week ${s + i}</th>`;
     if (extra) h += '<th scope="col">Attendance %<br><small>average</small></th><th scope="col">Late work<br><small>per week</small></th>';
     ghead.innerHTML = h + "<th></th></tr>";
@@ -46,7 +46,7 @@
       let h = `<tr><td class="n">${r + 1}</td>`;
       for (let c = 0; c < ncols(); c++) {
         const v = esc(row[c] ?? "");
-        if (c === 0) h += `<td><input class="id" data-r="${r}" data-c="0" value="${v}" placeholder="S${pad2(r + 1)}" aria-label="Row ${r + 1} Student ID" autocomplete="off" maxlength="24"></td>`;
+        if (c === 0) h += `<td class="idc"><input class="id" data-r="${r}" data-c="0" value="${v}" placeholder="S${pad2(r + 1)}" aria-label="Row ${r + 1} Student ID" autocomplete="off" maxlength="24"></td>`;
         else if (c <= nW) h += `<td><input data-r="${r}" data-c="${c}" value="${v}" inputmode="decimal" aria-label="Row ${r + 1} Week ${s + c - 1} score" autocomplete="off"></td>`;
         else h += `<td><input data-r="${r}" data-c="${c}" value="${v}" inputmode="decimal" aria-label="Row ${r + 1} ${c === nW + 1 ? "attendance percent" : "late work per week"}" autocomplete="off"></td>`;
       }

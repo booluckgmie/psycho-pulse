@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4b5fe8">
 <title>Psychometric-Pulse Dashboard</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -16,7 +17,7 @@
 
 <header class="hero"><div class="wrap">
   <h1>Notice early. Support early.</h1>
-  <p>Type in a few weeks of pulse scores or upload a spreadsheet. The model rebuilds itself from your data, separates school-wide effects from individual change, and shows who may need a supportive conversation.</p>
+  <p class="hero-long">Type in a few weeks of pulse scores or upload a spreadsheet. The model rebuilds itself from your data, separates school-wide effects from individual change, and shows who may need a supportive conversation.</p>
   <span class="tag">Perhati awal. Sokong awal.</span>
 </div></header>
 
@@ -42,7 +43,7 @@
       <label class="chk"><input type="checkbox" id="f_extra"> Add attendance &amp; late work (optional)</label>
     </div>
     <div class="tbl gridwrap"><table id="grid"><thead id="ghead"></thead><tbody id="gbody"></tbody></table></div>
-    <div class="row" style="margin-top:12px">
+    <div class="row actions" style="margin-top:12px">
       <button class="alt" id="g_add">+ Add student</button>
       <button class="alt" id="g_add5">+ Add 5 students</button>
       <button class="alt" id="g_example">Load example</button>
@@ -69,7 +70,7 @@
         <p class="note">Need weekly attendance, events or follow-up? Use the <a href="templates/psychometric-pulse-advanced.xlsx" download>advanced .xlsx</a> or <a href="templates/psychometric-pulse-advanced.csv" download>.csv</a> (one row per student per week).</p></div>
       <div class="step3"><span class="n">3</span><h3>Upload it back</h3>
         <div class="drop" id="drop">
-          <b>Drop your .xlsx or .csv here</b>
+          <b>Choose or drop your .xlsx or .csv file</b>
           <p class="note" style="margin:4px 0 12px">Several files at once is fine. Everything stays in this tab's memory.</p>
           <label class="btn" for="file" tabindex="0">Choose file(s)</label>
           <input type="file" id="file" accept=".xlsx,.csv" multiple hidden>
@@ -110,8 +111,8 @@
       <label>Show <select id="flt"><option value="2">Orange + Red</option><option value="1">Yellow and above</option><option value="0">Everyone</option></select></label>
       <label>Class <select id="cls"><option value="">All</option></select></label>
     </div>
-    <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>Latest</th><th>Adjusted</th><th>Why</th><th>Outlook</th><th>Follow-up</th></tr></thead><tbody id="rows"></tbody></table></div>
-    <p class="note">Alerts prompt a private, supportive conversation. They are not a diagnosis and must never be used to label a student. Click a row for the student's history.</p>
+    <div class="tbl"><table class="stack students"><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>Latest</th><th>Adjusted</th><th>Why</th><th>Outlook</th><th>Follow-up</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <p class="note">Alerts prompt a private, supportive conversation. They are not a diagnosis and must never be used to label a student. Click or tap a student for their history and forecast.</p>
   </div>
 
   <div class="card fade" id="detail" hidden>
