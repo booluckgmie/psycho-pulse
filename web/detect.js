@@ -18,13 +18,18 @@
     return m;
   }
 
-  function parseCSV(text) {
-    const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim());
+  function parseCSVTable(text) {
+    const lines = text.replace(/^\ufeff/, "").replace(/\r/g, "").split("\n").filter(l => l.trim());
+    const first = lines[0] || "", count = ch => first.split(ch).length;
+    const d = count("\t") > count(",") && count("\t") >= count(";") ? "\t" : count(";") > count(",") ? ";" : ",";   // Excel in some locales exports ; or tabs
     const split = l => { const o = []; let c = "", q = false;
-      for (const ch of l) { if (ch === '"') q = !q; else if (ch === "," && !q) { o.push(c); c = ""; } else c += ch; }
-      o.push(c); return o; };
-    const head = split(lines[0]).map(h => h.trim());
-    return lines.slice(1).map(l => { const v = split(l), r = {}; head.forEach((h, i) => r[h] = (v[i] ?? "").trim()); return r; });
+      for (const ch of l) { if (ch === '"') q = !q; else if (ch === d && !q) { o.push(c); c = ""; } else c += ch; }
+      o.push(c); return o.map(x => x.trim()); };
+    return lines.map(split);
+  }
+  function parseCSV(text) {
+    const t = parseCSVTable(text); if (!t.length) return [];
+    return t.slice(1).map(v => { const r = {}; t[0].forEach((h, i) => r[h] = v[i] ?? ""); return r; });
   }
 
   function validate(rows) {
@@ -146,37 +151,99 @@
     return { slope, fittedNow: now, points, weeksToFloor: toFloor, n };
   }
 
+  function tierFor(med) {
+    if (med < 3) return { tier: "Not enough", advice: "Need at least 3 screenings per student before any trend can be judged. Only a single very low score can be noticed." };
+    if (med < 5) return { tier: "Early signals", advice: "Useful for obvious drops only. Forecast is rough. Add screenings weekly to reach 5." };
+    if (med < 8) return { tier: "Usable", advice: "Reasonable detection and forecasts. 8+ screenings gives much better coverage." };
+    return { tier: "Reliable", advice: "Enough history for stable detection and forecasts." };
+  }
+
   // How much can a teacher trust the output? Based on screenings per student and group size.
   function readiness(rawRows) {
     const rows = validate(rawRows), out = [];
     for (const [cls, g] of group(rows, r => r.class)) {
       const per = [...group(g, r => r.student_id)].map(([, x]) => new Set(x.map(r => r.week)).size);
       const students = per.length, screenings = Math.min(...per), med = median(per);
-      let tier, advice;
-      if (med < 3) { tier = "Not enough"; advice = "Need at least 3 screenings per student before any trend can be judged. Only a single very low score can be noticed."; }
-      else if (med < 5) { tier = "Early signals"; advice = "Useful for obvious drops only. Forecast is rough. Add screenings weekly to reach 5."; }
-      else if (med < 8) { tier = "Usable"; advice = "Reasonable detection and forecasts. 8+ screenings gives much better coverage."; }
-      else { tier = "Reliable"; advice = "Enough history for stable detection and forecasts."; }
+      let { tier, advice } = tierFor(med);
       if (students < 6) advice += " With fewer than 6 students, alerts are unstable and class-wide effects cannot be separated from individual change. 10 or more is recommended.";
       out.push({ class: cls, students, screenings, median: med, tier, advice });
     }
     return out.sort((a, b) => a.class.localeCompare(b.class));
   }
 
-  // Teacher quick entry: "S01, 7.5, 7.0, 6.1" per line; optional "class: 5A" and "start: 3" lines.
-  function quickEntryToCSV(text) {
-    let cls = "Class", start = 1; const lines = ["student_id,class,week,score"];
-    for (const raw of text.split("\n")) {
-      const l = raw.trim(); if (!l) continue;
-      let m = l.match(/^class\s*:\s*(.+)$/i); if (m) { cls = m[1].trim(); continue; }
-      m = l.match(/^start\s*:\s*(\d+)$/i); if (m) { start = +m[1]; continue; }
-      const parts = l.split(/[\s,;]+/).map(x => x.trim()).filter(x => x !== "");
-      const id = parts.shift();
-      parts.forEach((v, i) => lines.push([id, cls, start + i, v].join(",")));
+  // ---- Spreadsheet intake -------------------------------------------------------------------
+  // Accepts [{name, table}] (table = array of rows) from an .xlsx or .csv and returns {rows, notes}.
+  // Two layouts: WIDE (one row per student, columns "Week 1", "Week 2"...; optional Attendance and
+  // Late work sheets) and LONG (one row per student per week: student_id, class, week, score...).
+  const norm = h => String(h ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  const blank = v => String(v ?? "").trim() === "";
+  const IGNORE = /^(read_?me|example|examples|guide|instructions|help)/;
+  const weekOf = h => { const m = String(h).trim().match(/^(?:week|wk|w)[\s_.-]*0*(\d+)$/i) || String(h).trim().match(/^0*(\d+)$/); return m ? +m[1] : null; };
+
+  function headOf(table) {
+    const i = table.findIndex(r => r.some(c => !blank(c)));
+    if (i < 0) return null;
+    const head = table[i].map(c => String(c ?? "").trim());
+    return { head, first: i, body: table.slice(i + 1).map((r, k) => ({ r, line: i + 2 + k })).filter(x => x.r.some(c => !blank(c))) };
+  }
+  const idCol = head => head.findIndex(h => ["student_id", "student", "id", "studentid", "student_no", "student_number"].includes(norm(h)));
+  const clsCol = head => head.findIndex(h => norm(h) === "class");
+
+  function readWide(sheet, label, kind) {
+    const H = headOf(sheet.table); if (!H) return new Map();
+    const ic = idCol(H.head);
+    if (ic < 0) throw new Error(label + ': add a "Student ID" column.');
+    const cc = clsCol(H.head), weeks = H.head.map((h, i) => [weekOf(h), i]).filter(([w]) => w !== null);
+    const seenW = new Set(); weeks.forEach(([w]) => { if (seenW.has(w)) throw new Error(label + ": Week " + w + " appears twice in the header."); seenW.add(w); });
+    const out = new Map(), seenId = new Map();
+    for (const { r, line } of H.body) {
+      const id = String(r[ic] ?? "").trim(), cells = weeks.filter(([, i]) => !blank(r[i]));
+      if (!id) { if (cells.length) throw new Error(label + ", row " + line + ": there are values but no Student ID."); continue; }
+      if (/\s/.test(id)) throw new Error(label + ", row " + line + ': Student ID "' + id + '" must not contain spaces.');
+      if (seenId.has(id.toLowerCase())) throw new Error(label + ': Student ID "' + id + '" appears twice (rows ' + seenId.get(id.toLowerCase()) + " and " + line + ").");
+      seenId.set(id.toLowerCase(), line);
+      const cls = cc >= 0 && !blank(r[cc]) ? String(r[cc]).trim() : "Class";
+      for (const [w, i] of cells) {
+        const raw = String(r[i]).trim().replace(/^(\d+),(\d+)$/, "$1.$2"), v = Number(raw);
+        if (raw === "" || Number.isNaN(v)) throw new Error(label + ", " + id + ", Week " + w + ': "' + String(r[i]).trim() + '" is not a number.');
+        if (kind === "score" && (v < 1 || v > 10)) throw new Error(label + ", " + id + ", Week " + w + ": score " + v + " must be between 1 and 10.");
+        if (kind === "attendance" && (v < 0 || v > 100)) throw new Error(label + ", " + id + ", Week " + w + ": attendance " + v + " must be between 0 and 100.");
+        if (kind === "late" && v < 0) throw new Error(label + ", " + id + ", Week " + w + ": late work cannot be negative.");
+        out.set(id + "|" + w, { student_id: id, class: cls, week: w, value: v });
+      }
     }
-    return lines.join("\n");
+    return out;
   }
 
-  const api = { CFG, LEVELS, parseCSV, validate, timeline, latestAlerts, rebuild, forecast, readiness, quickEntryToCSV, EARLY };
+  function normalizeSheets(input) {
+    const sheets = (Array.isArray(input) ? input : Object.entries(input).map(([name, table]) => ({ name, table })))
+      .filter(s => !IGNORE.test(norm(s.name)));
+    const info = sheets.map(s => ({ s, H: headOf(s.table) })).filter(x => x.H);
+    const isLong = x => { const n = x.H.head.map(norm); return n.includes("week") && n.includes("score"); };
+    const long = info.find(isLong);
+    if (long) {                                     // LONG layout: pass through, trimmed
+      const { head, body } = long.H;
+      if (!body.length) throw new Error("The file has column headings but no data rows.");
+      return { rows: body.map(({ r }) => { const o = {}; head.forEach((h, i) => { if (h) o[norm(h) === "student" ? "student_id" : norm(h)] = String(r[i] ?? "").trim(); }); return o; }), notes: [] };
+    }
+    const find = re => info.find(x => re.test(norm(x.s.name)));
+    const sc = find(/^scores?/) || info.find(x => x.H.head.some(h => weekOf(h) !== null));
+    if (!sc) throw new Error('No scores found. Use the template: one row per student with "Week 1", "Week 2"... columns.');
+    const scores = readWide(sc.s, sc.s.name || "Scores", "score");
+    if (!scores.size) throw new Error("No scores found. Fill in at least one Week column for at least one student.");
+    const notes = [], att = find(/^attendance/), late = find(/^late/);
+    const A = att ? readWide(att.s, att.s.name, "attendance") : new Map(), L = late ? readWide(late.s, late.s.name, "late") : new Map();
+    const orphans = [...A.keys(), ...L.keys()].filter(k => !scores.has(k)).length;
+    if (orphans) notes.push(orphans + " attendance / late-work value(s) had no matching score and were ignored.");
+    const rows = [...scores.values()].map(x => {
+      const k = x.student_id + "|" + x.week, o = { student_id: x.student_id, class: x.class, week: x.week, score: x.value };
+      if (A.has(k)) o.attendance_pct = A.get(k).value;
+      if (L.has(k)) o.late_submissions = L.get(k).value;
+      return o;
+    });
+    return { rows, notes };
+  }
+
+  const api = { CFG, LEVELS, parseCSV, parseCSVTable, validate, timeline, latestAlerts, rebuild, forecast, readiness, tierFor, normalizeSheets, EARLY };
   if (typeof module !== "undefined") module.exports = api; else root.Pulse = api;
 })(typeof window !== "undefined" ? window : globalThis);

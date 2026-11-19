@@ -9,7 +9,7 @@ school-wide changes (a teacher transfer, exam week) are separated from individua
 ```bash
 pip install -r requirements.txt
 python3 -m pulse.simulate          # data/sample_school_upload.csv (+ hidden ground truth)
-python3 -m pulse.template          # data/school_upload_template.{csv,xlsx}
+python3 -m pulse.template          # downloadable templates -> web/templates/
 python3 -m pulse.evaluate          # frequency study -> data/evaluation.csv
 python3 -m pulse.evaluate --study rebuild   # fixed vs rebuilt model
 python3 -m pulse.minimum_data      # how little data works (~4 min) -> data/minimum_data.csv
@@ -52,7 +52,7 @@ defaults) to about 14% (rebuilt) with ~0.1 weeks less lead time and unchanged de
   \`python3 -m pulse.evaluate && python3 -m pulse.evaluate --study rebuild && python3 -m pulse.build_site\`.
 
 ## Small data: how much does a teacher need?
-Teachers can type scores straight into the dashboard (`S01, 7.5, 7.0, 6.1`) with no attendance or spreadsheet; the dashboard shows a readiness tier,
+Teachers can type scores into a form on the dashboard (class, first week, number of weeks, one row per student; paste from Excel works) with no attendance or spreadsheet, or download a template, fill it in and upload it back; the dashboard shows a readiness tier,
 an **Outlook** column and a forecast plot (4 weeks ahead, ~80% band) per student. With 8 or fewer screenings per student the model switches to a more
 sensitive **early mode** (decline 0.8 / sharp drop 1.2 / floor 5.5). Groups under 5 students skip the class adjustment because the median would absorb the student's own decline.
 
@@ -65,6 +65,18 @@ sensitive **early mode** (decline 0.8 / sharp drop 1.2 / floor 5.5). Groups unde
 
 Forecast: the 80% band held about 77% of the time (65-84%); 3-weeks-ahead error is 0.6-0.9 points with 5+ screenings (about 1.2 with 3).
 Classes of 4 gave up to 19% false alarms, hence the 6-student minimum. All figures are synthetic (single class, ~20% declining, noise sd 0.45).
+
+## Templates and upload
+`web/templates/` (built by `python3 -m pulse.template`, linked from the dashboard's upload tab):
+
+| File | Layout | For |
+|---|---|---|
+| `psychometric-pulse-template.xlsx` | one row per student, `Week 1..12` columns; Read me, Scores (1-10 input check), optional Attendance and Late work sheets, worked Example | most teachers |
+| `psychometric-pulse-template.csv` | same layout, scores only | spreadsheets that export CSV |
+| `psychometric-pulse-advanced.xlsx/.csv` | one row per student per week (+ attendance, late work, school events, follow-up) | school data teams |
+
+The dashboard reads `.xlsx` directly in the browser (`web/xlsx.js`, no libraries, nothing uploaded) and `.csv` with comma, semicolon or tab separators and decimal commas.
+Renaming the headings (`Week 5`, `Week 6`...) starts at a later week. Blank cells mean "not measured". Errors name the student and week (for example `S01, Week 4: score 11 must be between 1 and 10`). Files can be added one after another; they merge in memory.
 
 ## Deploy (Vercel)
 Static site, no build step: \`vercel.json\` serves \`web/\` with clean URLs (\`/\` dashboard, \`/methodology\`) and security headers.

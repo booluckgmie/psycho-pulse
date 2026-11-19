@@ -2,44 +2,53 @@ const COL={Red:'var(--red)',Orange:'var(--orange)',Yellow:'var(--yellow)',Green:
 const $=id=>document.getElementById(id);
 // In-memory pool only. No browser storage, no network.
 let POOL=new Map(),TL=[],ALERTS=[],CFG=null,FC=new Map(),NOISE=null;
+const setMsg=(t,c='note')=>{$('msg').textContent=t;$('msg').className=c};
 
-function ingest(texts){
-  let replaced=0;
-  for(const t of texts){
-    for(const r of Pulse.parseCSV(t)){
-      const k=r.student_id+'|'+r.week;
-      if(POOL.has(k))replaced++;
-      POOL.set(k,r);
-    }
-  }
-  rebuild(replaced);
-}
-function rebuild(replaced=0){
+/* Rebuild the model from `pool`; commit to globals only if everything succeeds. */
+function analyse(pool,replaced=0,notes=[]){
   try{
-    const rows=[...POOL.values()];
+    const rows=[...pool.values()];
     const {cfg,report}=Pulse.rebuild(rows);          // model rebuilt from scratch every time
-    CFG=cfg;NOISE=report.noiseUsed;TL=Pulse.timeline(rows,cfg);ALERTS=Pulse.latestAlerts(rows,cfg);
-    FC=new Map();const by=new Map();TL.forEach(r=>{(by.get(r.student_id)||by.set(r.student_id,[]).get(r.student_id)).push(r)});
-    by.forEach((g,id)=>FC.set(id,Pulse.forecast(g.map(r=>r.week),g.map(r=>r.adjusted),cfg,NOISE)));
-    $('msg').textContent=`${report.students} students, ${report.weeks} weeks, ${report.rows} rows in memory`+(replaced?` (${replaced} rows replaced by newer upload)`:'')+'.';
-    $('msg').className='note';$('forget').hidden=false;render(report,Pulse.readiness(rows));
-  }catch(e){
-    $('msg').textContent=e.message;$('msg').className='err';
-    if(!TL.length)$('out').hidden=true;
-  }
+    const tl=Pulse.timeline(rows,cfg),alerts=Pulse.latestAlerts(rows,cfg),ready=Pulse.readiness(rows);
+    const fc=new Map(),by=new Map();tl.forEach(r=>{(by.get(r.student_id)||by.set(r.student_id,[]).get(r.student_id)).push(r)});
+    by.forEach((g,id)=>fc.set(id,Pulse.forecast(g.map(r=>r.week),g.map(r=>r.adjusted),cfg,report.noiseUsed)));
+    POOL=pool;CFG=cfg;NOISE=report.noiseUsed;TL=tl;ALERTS=alerts;FC=fc;
+    setMsg(`${report.students} students, ${report.weeks} weeks, ${report.rows} rows in memory`+(replaced?` (${replaced} rows replaced by newer data)`:'')+'.'+(notes.length?' '+notes.join(' '):''));
+    $('forget').hidden=false;render(report,ready);return true;
+  }catch(e){setMsg(e.message,'err');return false}
 }
-$('quickgo').onclick=()=>{const t=$('quick').value.trim();if(!t){$('msg').textContent='Type at least one line such as  S01, 7.5, 7.0, 6.2';$('msg').className='err';return}
-  try{POOL=new Map();ingest([Pulse.quickEntryToCSV(t)])}catch(e){$('msg').textContent=e.message;$('msg').className='err'}};
-function forget(){POOL=new Map();TL=[];ALERTS=[];CFG=null;$('out').hidden=true;$('forget').hidden=true;$('file').value='';$('quick').value='';$('msg').textContent='All data cleared from memory.';$('msg').className='note'}
+/* Add rows to what is in memory (or replace it). Rows are plain objects: student_id, class, week, score, ... */
+function ingestRows(rows,notes=[],replace=false){
+  const next=replace?new Map():new Map(POOL);let replaced=0;
+  for(const r of rows){const k=r.student_id+'|'+r.week;if(next.has(k))replaced++;next.set(k,r)}
+  return analyse(next,replaced,notes);
+}
+async function readFile(f){
+  const n=f.name.toLowerCase();
+  if(n.endsWith('.xlsx'))return Pulse.normalizeSheets(await Xlsx.read(await f.arrayBuffer()));
+  if(n.endsWith('.csv'))return Pulse.normalizeSheets([{name:f.name,table:Pulse.parseCSVTable(await f.text())}]);
+  throw new Error(`${f.name}: please use .xlsx or .csv (save an older .xls file as .xlsx first).`);
+}
+async function ingestFiles(files){
+  try{
+    const res=await Promise.all(files.map(async f=>{
+      try{return await readFile(f)}
+      catch(e){throw new Error(e.message.startsWith(f.name)?e.message:f.name+': '+e.message)}}));
+    ingestRows(res.flatMap(r=>r.rows),res.flatMap(r=>r.notes));
+  }catch(e){setMsg(e.message,'err')}
+}
+function forget(){POOL=new Map();TL=[];ALERTS=[];CFG=null;FC=new Map();$('out').hidden=true;$('forget').hidden=true;$('file').value='';
+  if(window.resetForm)window.resetForm();setMsg('All data cleared from memory.')}
 $('forget').onclick=forget;
-$('file').onchange=e=>{const fs=[...e.target.files];if(fs.length)Promise.all(fs.map(f=>f.text())).then(ingest);e.target.value=''};
+$('file').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)ingestFiles(fs)};
 const drop=$('drop');
 ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
-drop.addEventListener('drop',e=>{const fs=[...e.dataTransfer.files].filter(f=>f.name.endsWith('.csv'));if(fs.length)Promise.all(fs.map(f=>f.text())).then(ingest)});
+drop.addEventListener('drop',e=>{const fs=[...e.dataTransfer.files];if(fs.length)ingestFiles(fs)});
 document.querySelector('label[for=file]').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click()}};
-$('sample').onclick=()=>fetch('sample_school_upload.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>ingest([t]))
-  .catch(()=>{$('msg').textContent='Sample needs a web server (it cannot load from a local file). Upload sample_school_upload.csv instead.';$('msg').className='err'});
+$('sample').onclick=()=>fetch('sample_school_upload.csv').then(r=>{if(!r.ok)throw 0;return r.text()})
+  .then(t=>ingestRows(Pulse.normalizeSheets([{name:'sample.csv',table:Pulse.parseCSVTable(t)}]).rows))
+  .catch(()=>setMsg('Sample needs a web server (it cannot load from a local file). Upload sample_school_upload.csv instead.','err'));
 $('flt').onchange=$('cls').onchange=table;
 
 const TIER_COL={'Not enough':'var(--red)','Early signals':'var(--orange)','Usable':'var(--teal)','Reliable':'var(--green)'};

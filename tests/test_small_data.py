@@ -57,13 +57,3 @@ console.log(JSON.stringify(P.forecast(%s,%s,{low:5.0},0.5)));""" % (weeks, adj)]
     assert abs(js["weeksToFloor"] - py["weeks_to_floor"]) < 1e-9 if py["weeks_to_floor"] else js["weeksToFloor"] is None
     for a, b in zip(js["points"], py["points"]):
         assert abs(a["mean"] - b["mean"]) < 1e-9 and abs(a["lo"] - b["lo"]) < 1e-9 and abs(a["hi"] - b["hi"]) < 1e-9
-
-
-@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
-def test_quick_entry_and_readiness():
-    text = "class: 5A\nS01, 7.5, 7.0, 6.1\nS02 7 7.1"
-    js = "const P=require('./web/detect.js');const rows=P.parseCSV(P.quickEntryToCSV(process.argv[1]));" \
-         "console.log(JSON.stringify({n:rows.length,cls:rows[0].class,ready:P.readiness(rows)}));"
-    out = json.loads(subprocess.check_output(["node", "-e", js, text], text=True))
-    assert out["n"] == 5 and out["cls"] == "5A"
-    assert out["ready"][0]["tier"] == "Early signals" or out["ready"][0]["tier"] == "Not enough"

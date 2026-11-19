@@ -16,30 +16,67 @@
 
 <header class="hero"><div class="wrap">
   <h1>Notice early. Support early.</h1>
-  <p>Upload a week of pulse checks. The model rebuilds itself from your data, separates school-wide effects from individual change, and shows who may need a supportive conversation.</p>
+  <p>Type in a few weeks of pulse scores or upload a spreadsheet. The model rebuilds itself from your data, separates school-wide effects from individual change, and shows who may need a supportive conversation.</p>
   <span class="tag">Perhati awal. Sokong awal.</span>
 </div></header>
 
 <main class="wrap" style="padding-top:22px">
-<div class="card">
-  <div class="drop" id="drop">
-    <b>Drop your school CSV here</b>
-    <p class="note" style="margin:4px 0 12px">Add more files (e.g. next weeks) and the model rebuilds with all of them. Everything stays in this tab's memory.</p>
-    <div class="row" style="justify-content:center">
-      <label class="btn" for="file" tabindex="0">Choose CSV file(s)</label>
-      <input type="file" id="file" accept=".csv" multiple hidden>
-      <button class="alt" id="sample">Try sample data</button>
-      <button class="alt" id="forget" hidden>Forget all data</button>
+<div class="card" id="start">
+  <div class="row tabbar">
+    <div role="tablist" aria-label="How to add data" class="tabs">
+      <button role="tab" id="tab1" aria-selected="true" aria-controls="p1">Type in scores</button>
+      <button role="tab" id="tab2" aria-selected="false" aria-controls="p2" tabindex="-1">Upload a spreadsheet</button>
+    </div>
+    <span class="sp"></span>
+    <button class="alt" id="sample">Try sample data</button>
+    <button class="alt" id="forget" hidden>Forget all data</button>
+  </div>
+
+  <!-- Tab 1: form -->
+  <div id="p1" role="tabpanel" aria-labelledby="tab1">
+    <p class="sub">Enter one row per student. Use anonymous IDs (S01, S02&hellip;), never names. Scores are 1 to 10, higher is better. Leave a cell empty if a student was not measured that week.</p>
+    <div class="formrow">
+      <label>Class <input id="f_class" placeholder="e.g. 5A" maxlength="20" autocomplete="off"></label>
+      <label>First week number <input id="f_start" type="number" min="1" max="60" value="1"></label>
+      <label>Number of weeks <select id="f_weeks"></select></label>
+      <label class="chk"><input type="checkbox" id="f_extra"> Add attendance &amp; late work (optional)</label>
+    </div>
+    <div class="tbl gridwrap"><table id="grid"><thead id="ghead"></thead><tbody id="gbody"></tbody></table></div>
+    <div class="row" style="margin-top:12px">
+      <button class="alt" id="g_add">+ Add student</button>
+      <button class="alt" id="g_add5">+ Add 5 students</button>
+      <button class="alt" id="g_example">Load example</button>
+      <button class="alt" id="g_clear">Clear</button>
+      <span class="sp"></span>
+      <button id="g_go">Analyse scores</button>
+    </div>
+    <p id="fhint" class="note" role="status"></p>
+    <p id="fmsg" class="err" role="alert"></p>
+    <p class="note">Tip: copy a block of cells from Excel or Google Sheets, click the first cell here and paste. Analysing replaces any data already loaded; to combine several files, use the upload tab.</p>
+  </div>
+
+  <!-- Tab 2: templates + upload -->
+  <div id="p2" role="tabpanel" aria-labelledby="tab2" hidden>
+    <div class="grid g3">
+      <div class="step3"><span class="n">1</span><h3>Download a template</h3>
+        <p class="sub">Excel is easiest. It has a Read me, a Scores sheet with input checks, optional Attendance and Late work sheets, and a worked example.</p>
+        <div class="stack">
+          <a class="btn" href="templates/psychometric-pulse-template.xlsx" download>Excel template (.xlsx)</a>
+          <a class="btn alt" href="templates/psychometric-pulse-template.csv" download>CSV template (.csv)</a>
+        </div></div>
+      <div class="step3"><span class="n">2</span><h3>Fill it in</h3>
+        <p class="sub">One row per student: anonymous ID, class, then a score under each Week column. Empty = not measured. Start at another week by renaming the headings (Week 5, Week 6&hellip;).</p>
+        <p class="note">Need weekly attendance, events or follow-up? Use the <a href="templates/psychometric-pulse-advanced.xlsx" download>advanced .xlsx</a> or <a href="templates/psychometric-pulse-advanced.csv" download>.csv</a> (one row per student per week).</p></div>
+      <div class="step3"><span class="n">3</span><h3>Upload it back</h3>
+        <div class="drop" id="drop">
+          <b>Drop your .xlsx or .csv here</b>
+          <p class="note" style="margin:4px 0 12px">Several files at once is fine. Everything stays in this tab's memory.</p>
+          <label class="btn" for="file" tabindex="0">Choose file(s)</label>
+          <input type="file" id="file" accept=".xlsx,.csv" multiple hidden>
+        </div></div>
     </div>
   </div>
   <p id="msg" class="note" role="status"></p>
-</div>
-
-<div class="card">
-  <h2>No spreadsheet? Type in a few scores</h2>
-  <p class="sub">One student per line: an anonymous ID, then scores for week 1, 2, 3&hellip; (1-10). Three scores per student is the minimum; five or more is recommended. Attendance and late work are optional.</p>
-  <textarea id="quick" rows="6" spellcheck="false" aria-label="Quick score entry" placeholder="class: 5A&#10;start: 1&#10;S01, 7.5, 7.2, 6.8, 6.1, 5.4&#10;S02, 7.0, 7.1, 7.0, 7.3, 7.1&#10;S03, 6.8, 6.9, 6.6, 6.8, 6.7"></textarea>
-  <div class="row" style="margin-top:8px"><button id="quickgo">Analyse these scores</button><span class="note">Optional lines: <code>class: 5A</code> and <code>start: 3</code> (first week number).</span></div>
 </div>
 
 <div id="out" hidden>
@@ -89,6 +126,8 @@
 
 <script src="ecg.js"></script>
 <script src="detect.js"></script>
+<script src="xlsx.js"></script>
 <script src="dashboard.js"></script>
+<script src="form.js"></script>
 </body>
 </html>
